@@ -1,25 +1,19 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@prisma/client"
 import { success, error } from "@/lib/api-response"
 
-type LawWithVotes = Prisma.LawGetPayload<{
-  include: {
-    proposedBy: { select: { id: true; slug: true; name: true } }
-    tags: { select: { id: true; name: true } }
-    votes: {
-      orderBy: { date: "desc" }
-      include: {
-        memberVotes: {
-          select: {
-            choice: true
-            member: { select: { id: true; slug: true; name: true } }
-          }
-        }
-      }
-    }
-  }
-}>
+type VoteWithMembers = {
+  id: string
+  date: Date
+  type: string
+  outcome: string
+  description: string | null
+  sourceUrl: string | null
+  memberVotes: Array<{
+    choice: "YEA" | "NAY" | "ABSTAIN" | "ABSENT"
+    member: { id: string; slug: string; name: string }
+  }>
+}
 
 // GET /api/laws/[slug] — Single law detail with votes and related statements
 export async function GET(
@@ -29,7 +23,7 @@ export async function GET(
   try {
     const { slug } = await params
 
-    const law: LawWithVotes | null = await prisma.law.findUnique({
+    const law = await prisma.law.findUnique({
       where: { slug },
       include: {
         proposedBy: {
@@ -57,7 +51,7 @@ export async function GET(
     }
 
     // Compute vote breakdowns for each vote session
-    const votesWithBreakdown = law.votes.map((vote: LawWithVotes["votes"][number]) => {
+    const votesWithBreakdown = law.votes.map((vote: VoteWithMembers) => {
       const breakdown = { yea: 0, nay: 0, abstain: 0, absent: 0 }
       for (const mv of vote.memberVotes) {
         if (mv.choice === "YEA") breakdown.yea++
