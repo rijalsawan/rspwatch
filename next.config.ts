@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["playwright", "pg", "node-cron", "@neondatabase/serverless"],
 };
 
 export default nextConfig;

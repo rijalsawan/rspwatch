@@ -1,84 +1,88 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { PromiseCard, type PromiseStatus } from "@/components/domain/PromiseCard"
-import { FilterBar } from "@/components/shared/FilterBar"
-import { CheckCircle2, Clock, XCircle, CircleDashed } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { CheckCircle2, Clock, XCircle, CircleDashed, Search } from "lucide-react"
 
 interface PromiseData {
   id: string
+  slug: string
   title: string
-  description: string
+  description: string | null
   category: string
-  status: PromiseStatus
-  source: string
-  timeline?: string
+  status: string
+  source: string | null
+  evidenceUrl: string | null
+  lastUpdated: string
 }
 
-const SAMPLE_PROMISES: PromiseData[] = [
-  {
-    id: "prm-1",
-    title: "Launch One-Stop Digital Citizen Service Portal",
-    description: "Digitize 90% of basic ward services (birth certificates, local taxes, passport applications) to eliminate middle-men and long queues.",
-    category: "Governance",
-    status: "kept",
-    source: "2026 Election Manifesto (Pg. 12)",
-    timeline: "First 100 Days",
-  },
-  {
-    id: "prm-2",
-    title: "Mandatory Asset Declaration for All MPs",
-    description: "All RSP MPs and participating coalition members must publicly declare their domestic and foreign assets.",
-    category: "Anti-Corruption",
-    status: "kept",
-    source: "Citizen Contract",
-    timeline: "First 30 Days",
-  },
-  {
-    id: "prm-3",
-    title: "Overhaul Public School Management Boards",
-    description: "Remove partisan political appointments from local school boards and replace them with merit-based educators and parent committees.",
-    category: "Education",
-    status: "in-progress",
-    source: "2026 Election Manifesto (Pg. 24)",
-    timeline: "Year 1",
-  },
-  {
-    id: "prm-4",
-    title: "Establish Startup Fund and 5-Year Tax Holiday",
-    description: "Create a Rs. 5 Billion innovation fund and a 5-year corporate tax block exemption for newly registered tech startups.",
-    category: "Economy",
-    status: "in-progress",
-    source: "Economy Policy Brief 2026",
-    timeline: "Year 1",
-  },
-  {
-    id: "prm-5",
-    title: "Live-Stream Public Procurement Processes",
-    description: "Ensure that all public tender openings above Rs. 10 Million are live-streamed to prevent bid tampering.",
-    category: "Anti-Corruption",
-    status: "broken",
-    source: "Citizen Contract",
-    timeline: "First 100 Days",
-  },
-  {
-    id: "prm-6",
-    title: "Universal Basic Healthcare Insurance Expansion",
-    description: "Expand the national health insurance coverage to cover 80% of citizens by making enrollment automatic with national ID issuance.",
-    category: "Health",
-    status: "not-started",
-    source: "2026 Election Manifesto (Pg. 18)",
-    timeline: "Year 3",
-  },
-]
+function dbStatusToFrontend(status: string): PromiseStatus {
+  const map: Record<string, PromiseStatus> = {
+    KEPT: "kept",
+    IN_PROGRESS: "in-progress",
+    BROKEN: "broken",
+    NOT_STARTED: "not-started",
+  }
+  return map[status] ?? "not-started"
+}
 
 export default function PromisesPage() {
-  const stats = {
-    total: SAMPLE_PROMISES.length,
-    kept: SAMPLE_PROMISES.filter(p => p.status === 'kept').length,
-    inProgress: SAMPLE_PROMISES.filter(p => p.status === 'in-progress').length,
-    broken: SAMPLE_PROMISES.filter(p => p.status === 'broken').length,
-    notStarted: SAMPLE_PROMISES.filter(p => p.status === 'not-started').length,
-  }
+  const [promises, setPromises] = useState<PromiseData[]>([])
+  const [statusSummary, setStatusSummary] = useState<Record<string, number>>({ KEPT: 0, IN_PROGRESS: 0, BROKEN: 0, NOT_STARTED: 0 })
+  const [categoryBreakdown, setCategoryBreakdown] = useState<Record<string, Record<string, number>>>({})
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("")
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (statusFilter) params.set("status", statusFilter)
+        if (categoryFilter) params.set("category", categoryFilter)
+        const res = await fetch(`/api/promises?${params}`)
+        const json = await res.json()
+        if (json.data) setPromises(json.data)
+        if (json.meta) {
+          if (json.meta.byStatus) setStatusSummary(json.meta.byStatus)
+          if (json.meta.byCategory) setCategoryBreakdown(json.meta.byCategory)
+        }
+      } catch (e) {
+        console.error("Failed to load promises:", e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [statusFilter, categoryFilter])
+
+  const total = statusSummary.KEPT + statusSummary.IN_PROGRESS + statusSummary.BROKEN + statusSummary.NOT_STARTED || 1
+  const stats = [
+    { label: "Kept", count: statusSummary.KEPT, icon: CheckCircle2, color: "text-success", bg: "bg-success/10", border: "border-success/20" },
+    { label: "In Progress", count: statusSummary.IN_PROGRESS, icon: Clock, color: "text-warning", bg: "bg-warning/10", border: "border-warning/20" },
+    { label: "Broken", count: statusSummary.BROKEN, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/20" },
+    { label: "Not Started", count: statusSummary.NOT_STARTED, icon: CircleDashed, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border" },
+  ]
+
+  // Build category bars from API data
+  const categories = Object.entries(categoryBreakdown).map(([cat, counts]) => {
+    const catTotal = (counts.KEPT ?? 0) + (counts.IN_PROGRESS ?? 0) + (counts.BROKEN ?? 0) + (counts.NOT_STARTED ?? 0)
+    return {
+      cat,
+      kept: catTotal ? Math.round(((counts.KEPT ?? 0) / catTotal) * 100) : 0,
+      inProgress: catTotal ? Math.round(((counts.IN_PROGRESS ?? 0) / catTotal) * 100) : 0,
+      broken: catTotal ? Math.round(((counts.BROKEN ?? 0) / catTotal) * 100) : 0,
+    }
+  })
+
+  const filtered = search
+    ? promises.filter(p => p.title.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
+    : promises
 
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
@@ -89,8 +93,8 @@ export default function PromisesPage() {
             Promise Tracker
           </h1>
           <p className="text-lg text-muted-foreground">
-            A comprehensive scoreboard of the commitments laid out in the RSP's 
-            Citizen Contract and 2026 Election Manifesto. We track what's delivered, 
+            A comprehensive scoreboard of the commitments laid out in the RSP's
+            Citizen Contract and 2026 Election Manifesto. We track what's delivered,
             what's stalled, and what's broken.
           </p>
         </div>
@@ -98,80 +102,110 @@ export default function PromisesPage() {
 
       {/* Aggregate Stats Dash */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Kept", count: stats.kept, icon: CheckCircle2, color: "text-success", bg: "bg-success/10", border: "border-success/20" },
-          { label: "In Progress", count: stats.inProgress, icon: Clock, color: "text-warning", bg: "bg-warning/10", border: "border-warning/20" },
-          { label: "Broken", count: stats.broken, icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/20" },
-          { label: "Not Started", count: stats.notStarted, icon: CircleDashed, color: "text-muted-foreground", bg: "bg-muted/50", border: "border-border" }
-        ].map((stat, i) => (
+        {stats.map((stat, i) => (
           <div key={i} className={`p-5 rounded-md border ${stat.border} flex flex-col gap-3 bg-card`}>
             <div className="flex items-center gap-2">
               <div className={`p-2 rounded-sm ${stat.bg}`}>
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
-              <span className="font-semibold tracking-wide uppercase text-sm text-foreground">
-                {stat.label}
-              </span>
+              <span className="font-semibold tracking-wide uppercase text-sm text-foreground">{stat.label}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-display font-bold tabular-nums">
-                {stat.count}
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">
-                ({Math.round((stat.count / stats.total) * 100)}%)
-              </span>
+              <span className="text-4xl font-display font-bold tabular-nums">{stat.count}</span>
+              <span className="text-sm font-medium text-muted-foreground">({Math.round((stat.count / total) * 100)}%)</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Progress Bars per Category (Visualized as flat chunks) */}
-      <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-6">
-        <h3 className="font-display font-bold text-lg">Category Fulfillment</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-          {[
-            { cat: "Governance", kept: 80, inProgress: 15, broken: 5 },
-            { cat: "Economy", kept: 45, inProgress: 50, broken: 5 },
-            { cat: "Anti-Corruption", kept: 60, inProgress: 20, broken: 20 },
-            { cat: "Education", kept: 20, inProgress: 70, broken: 10 },
-          ].map((c) => (
-            <div key={c.cat} className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-sm font-semibold">
-                <span>{c.cat}</span>
-                <span className="text-muted-foreground">{c.kept}% Kept</span>
+      {/* Category Fulfillment Progress Bars */}
+      {categories.length > 0 && (
+        <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-6">
+          <h3 className="font-display font-bold text-lg">Category Fulfillment</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+            {categories.map((c) => (
+              <div key={c.cat} className="flex flex-col gap-2">
+                <div className="flex justify-between items-center text-sm font-semibold">
+                  <span>{c.cat}</span>
+                  <span className="text-muted-foreground">{c.kept}% Kept</span>
+                </div>
+                <div className="flex w-full h-2.5 rounded-full overflow-hidden bg-muted">
+                  <div className="bg-success h-full" style={{ width: `${c.kept}%` }} />
+                  <div className="bg-warning h-full" style={{ width: `${c.inProgress}%` }} />
+                  <div className="bg-destructive h-full" style={{ width: `${c.broken}%` }} />
+                </div>
               </div>
-              {/* Flat discrete progress bar */}
-              <div className="flex w-full h-2.5 rounded-full overflow-hidden bg-muted">
-                <div className="bg-success h-full" style={{ width: `${c.kept}%` }} />
-                <div className="bg-warning h-full" style={{ width: `${c.inProgress}%` }} />
-                <div className="bg-destructive h-full" style={{ width: `${c.broken}%` }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Filter and Content */}
       <div className="flex flex-col gap-6">
-        <FilterBar />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-4 bg-card border border-border rounded-md">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search promises..." className="pl-9 bg-background" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="flex gap-3">
+            <div className="relative inline-flex">
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-10 w-full md:w-auto appearance-none rounded-md border border-input bg-background pl-3 pr-10 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value="">All Status</option>
+                <option value="KEPT">Kept</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="BROKEN">Broken</option>
+                <option value="NOT_STARTED">Not Started</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
+            <div className="relative inline-flex">
+              <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="h-10 w-full md:w-auto appearance-none rounded-md border border-input bg-background pl-3 pr-10 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value="">All Categories</option>
+                <option value="Governance">Governance</option>
+                <option value="Anti-Corruption">Anti-Corruption</option>
+                <option value="Education">Education</option>
+                <option value="Economy">Economy</option>
+                <option value="Health">Health</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {/* Grid of Promise Cards */}
-        <StaggerList className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {SAMPLE_PROMISES.map((promise) => (
-            <PromiseCard
-              key={promise.id}
-              id={promise.id}
-              title={promise.title}
-              description={promise.description}
-              category={promise.category}
-              status={promise.status}
-              source={promise.source}
-              timeline={promise.timeline}
-            />
-          ))}
-        </StaggerList>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-md p-5 animate-pulse">
+                <div className="flex gap-2 mb-3"><div className="h-5 w-16 bg-muted rounded" /><div className="h-5 w-20 bg-muted rounded" /></div>
+                <div className="h-5 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-4 bg-muted rounded w-full mb-1" />
+                <div className="h-4 bg-muted rounded w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length > 0 ? (
+          <StaggerList className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filtered.map((promise) => (
+              <PromiseCard
+                key={promise.id}
+                id={promise.id}
+                title={promise.title}
+                description={promise.description ?? ""}
+                category={promise.category}
+                status={dbStatusToFrontend(promise.status)}
+                source={promise.source ?? ""}
+                evidenceTarget={promise.evidenceUrl ?? undefined}
+              />
+            ))}
+          </StaggerList>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">No promises found matching your filters.</div>
+        )}
       </div>
-
     </PageTransition>
   )
 }

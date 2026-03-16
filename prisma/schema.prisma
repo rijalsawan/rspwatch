@@ -1,0 +1,315 @@
+// RSP Watch — Full Database Schema
+// All text fields support Unicode (Devanagari/Nepali) via PostgreSQL's default UTF-8 encoding.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────
+
+enum LawStatus {
+  DRAFT
+  PROPOSED
+  COMMITTEE
+  PASSED
+  REJECTED
+  ENACTED
+}
+
+enum PromiseStatus {
+  KEPT
+  IN_PROGRESS
+  BROKEN
+  NOT_STARTED
+}
+
+enum PromiseSource {
+  MANIFESTO
+  CITIZEN_CONTRACT
+  SPEECH
+  POLICY_BRIEF
+}
+
+enum VoteChoice {
+  YEA
+  NAY
+  ABSTAIN
+  ABSENT
+}
+
+enum VoteType {
+  FINAL_PASSAGE
+  AMENDMENT
+  PROCEDURAL
+}
+
+enum VoteOutcome {
+  PASSED
+  DEFEATED
+}
+
+enum ActivityType {
+  LAW
+  VOTE
+  STATEMENT
+  PROMISE_UPDATE
+  APPOINTMENT
+  CONTROVERSY
+}
+
+enum DataConfidence {
+  SCRAPED
+  VERIFIED
+  MANUAL
+}
+
+enum ScrapeStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ─── Models ──────────────────────────────────────────────────
+
+/// RSP Member of Parliament profile
+model Member {
+  id                String    @id @default(cuid())
+  slug              String    @unique
+  name              String    // English name
+  nameNepali        String?   // नेपालीमा नाम (Devanagari)
+  photoUrl          String?
+  constituency      String
+  province          String
+  role              String    // e.g. "Prime Minister", "Member of Parliament"
+  isActive          Boolean   @default(true)
+  attendancePercent Float?
+  externalId        String?   @unique // ID from parliament.gov.np
+  sourceUrl         String?
+
+  // Relations
+  proposedLaws      Law[]
+  memberVotes       MemberVote[]
+  statements        Statement[]
+  appointments      Appointment[]
+  controversies     Controversy[]
+  activityFeed      ActivityFeed[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([province])
+  @@index([isActive])
+}
+
+/// A bill or enacted law tracked through its full lifecycle
+model Law {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  title         String
+  titleNepali   String?        // Unicode title
+  code          String?        // e.g. "BILL-2026-04"
+  status        LawStatus
+  category      String
+  summary       String
+  fullText      String?        // Full bill text or key provisions
+  sourceUrl     String?
+  proposedDate  DateTime?
+  passedDate    DateTime?
+  enactedDate   DateTime?
+  confidence    DataConfidence @default(SCRAPED)
+  externalId    String?        @unique
+
+  // Relations
+  proposedById  String?
+  proposedBy    Member?        @relation(fields: [proposedById], references: [id])
+  votes         Vote[]
+  tags          Tag[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([proposedDate])
+}
+
+/// A parliamentary vote session
+model Vote {
+  id          String         @id @default(cuid())
+  externalId  String?        @unique
+  date        DateTime
+  type        VoteType
+  outcome     VoteOutcome
+  description String?
+  sourceUrl   String?
+  confidence  DataConfidence @default(SCRAPED)
+
+  // Relations
+  lawId       String?
+  law         Law?           @relation(fields: [lawId], references: [id])
+  memberVotes MemberVote[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([date])
+}
+
+/// Join table: how each MP voted on a specific Vote
+model MemberVote {
+  id       String     @id @default(cuid())
+  choice   VoteChoice
+
+  memberId String
+  member   Member     @relation(fields: [memberId], references: [id])
+  voteId   String
+  vote     Vote       @relation(fields: [voteId], references: [id])
+
+  createdAt DateTime  @default(now())
+
+  @@unique([memberId, voteId])
+  @@index([voteId])
+}
+
+/// Campaign promise from the RSP Citizen Contract or manifesto
+model Promise {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  title       String
+  description String
+  category    String
+  status      PromiseStatus
+  source      PromiseSource
+  evidenceUrl String?
+  sourceUrl   String?
+  lastUpdated DateTime       @default(now())
+  confidence  DataConfidence @default(MANUAL)
+
+  tags        Tag[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([status])
+  @@index([category])
+}
+
+/// Public statement by an MP or the party
+model Statement {
+  id         String         @id @default(cuid())
+  title      String
+  content    String
+  date       DateTime
+  sourceUrl  String?
+  confidence DataConfidence @default(SCRAPED)
+
+  memberId   String?
+  member     Member?        @relation(fields: [memberId], references: [id])
+
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([date])
+}
+
+/// Cabinet or government appointment
+model Appointment {
+  id          String         @id @default(cuid())
+  title       String
+  appointee   String
+  position    String
+  date        DateTime
+  description String?
+  sourceUrl   String?
+  confidence  DataConfidence @default(SCRAPED)
+
+  memberId    String?
+  member      Member?        @relation(fields: [memberId], references: [id])
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([date])
+}
+
+/// Flagged controversies or issues
+model Controversy {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  severity    SeverityLevel
+  date        DateTime
+  sourceUrl   String?
+  isResolved  Boolean        @default(false)
+  confidence  DataConfidence @default(SCRAPED)
+
+  memberId    String?
+  member      Member?        @relation(fields: [memberId], references: [id])
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([date])
+  @@index([severity])
+}
+
+/// Denormalized unified timeline feed for /timeline page
+model ActivityFeed {
+  id              String       @id @default(cuid())
+  type            ActivityType
+  title           String
+  summary         String?
+  date            DateTime
+  entityId        String       // ID of the related record (law, vote, etc.)
+  entitySlug      String?      // Slug for URL linking
+  sourceUrl       String?
+
+  relatedMemberId String?
+  relatedMember   Member?      @relation(fields: [relatedMemberId], references: [id])
+
+  createdAt       DateTime     @default(now())
+
+  @@index([date(sort: Desc)])
+  @@index([type])
+}
+
+/// Scrape job audit log
+model ScrapeLog {
+  id             String       @id @default(cuid())
+  jobName        String
+  sourceUrl      String?
+  status         ScrapeStatus
+  recordsFound   Int          @default(0)
+  recordsCreated Int          @default(0)
+  recordsUpdated Int          @default(0)
+  errorMessage   String?
+  rawHtml        String?      // Raw HTML snapshot for auditing
+  durationMs     Int?
+  ranAt          DateTime     @default(now())
+
+  @@index([ranAt(sort: Desc)])
+  @@index([jobName])
+}
+
+/// Reusable tags across Laws and Promises
+model Tag {
+  id       String    @id @default(cuid())
+  name     String    @unique
+
+  laws     Law[]
+  promises Promise[]
+
+  createdAt DateTime @default(now())
+}
