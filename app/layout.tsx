@@ -3,6 +3,7 @@ import { Inter, Outfit } from "next/font/google"
 import Script from "next/script"
 import "./globals.css"
 import { ThemeProvider } from "@/components/global/ThemeProvider"
+import { SearchProvider } from "@/components/global/SearchModal"
 import { Navbar } from "@/components/global/Navbar"
 import { Footer } from "@/components/global/Footer"
 
@@ -148,9 +149,11 @@ export default function RootLayout({
         className={`${inter.variable} ${outfit.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Navbar />
-          <main className="flex-1 flex flex-col">{children}</main>
-          <Footer />
+          <SearchProvider>
+            <Navbar />
+            <main className="flex-1 flex flex-col">{children}</main>
+            <Footer />
+          </SearchProvider>
         </ThemeProvider>
         <Script
           id="schema-website"

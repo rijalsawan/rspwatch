@@ -120,22 +120,40 @@ export default function PromisesPage() {
 
       {/* Category Fulfillment Progress Bars */}
       {categories.length > 0 && (
-        <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-6">
-          <h3 className="font-display font-bold text-lg">Category Fulfillment</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-            {categories.map((c) => (
-              <div key={c.cat} className="flex flex-col gap-2">
-                <div className="flex justify-between items-center text-sm font-semibold">
-                  <span>{c.cat}</span>
-                  <span className="text-muted-foreground">{c.kept}% Kept</span>
+        <div className="bg-card border border-border p-6 lg:p-8 rounded-md flex flex-col gap-8">
+          <h3 className="font-display font-bold text-xl">Category Fulfillment</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+            {categories.map((c) => {
+              const pending = Math.max(0, 100 - c.kept - c.inProgress - c.broken)
+              return (
+                <div key={c.cat} className="flex flex-col gap-3 group">
+                  <div className="flex justify-between items-end">
+                    <span className="font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">{c.cat}</span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-2xl font-display font-bold text-success tabular-nums leading-none">
+                        {c.kept}%
+                      </span>
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-1">Kept</span>
+                    </div>
+                  </div>
+                  
+                  {/* Segmented Bar */}
+                  <div className="flex w-full h-3.5 gap-1 rounded-sm overflow-hidden bg-background">
+                    {c.kept > 0 && <div className="bg-success h-full transition-all duration-500 ease-out" style={{ width: `${c.kept}%` }} />}
+                    {c.inProgress > 0 && <div className="bg-warning h-full transition-all duration-500 ease-out" style={{ width: `${c.inProgress}%` }} />}
+                    {c.broken > 0 && <div className="bg-destructive h-full transition-all duration-500 ease-out" style={{ width: `${c.broken}%` }} />}
+                    {pending > 0 && <div className="bg-muted h-full transition-all duration-500 ease-out" style={{ width: `${pending}%` }} />}
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-medium tracking-wide text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-success"/> {c.kept}% Kept</span>
+                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-warning"/> {c.inProgress}% Ongoing</span>
+                    <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-destructive"/> {c.broken}% Broken</span>
+                  </div>
                 </div>
-                <div className="flex w-full h-2.5 rounded-full overflow-hidden bg-muted">
-                  <div className="bg-success h-full" style={{ width: `${c.kept}%` }} />
-                  <div className="bg-warning h-full" style={{ width: `${c.inProgress}%` }} />
-                  <div className="bg-destructive h-full" style={{ width: `${c.broken}%` }} />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

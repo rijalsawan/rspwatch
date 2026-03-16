@@ -33,4 +33,9 @@ export const SCRAPE_SCHEDULES: ScheduleEntry[] = [
     cron: process.env.SCRAPE_NEWS_INTERVAL ?? "0 */2 * * *",
     description: "Scrape RSP-related news from onlinekhabar.com every 2 hours",
   },
+  {
+    jobName: "rsp-official",
+    cron: "0 */4 * * *",
+    description: "Scrape RSP official website (press, members, timeline) every 4 hours",
+  },
 ]

@@ -5,7 +5,7 @@ import { PageTransition } from "@/components/animations/PageTransition"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ExternalLink, Users, Scale, FileText, CheckCircle2, History, X } from "lucide-react"
+import { ArrowLeft, ExternalLink, Users, Scale, FileText, CheckCircle2, History, BadgeCheck, Tag, Info, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
@@ -13,15 +13,16 @@ interface LawDetail {
   slug: string
   title: string
   titleNepali: string | null
-  code: string
+  code: string | null
   status: string
   category: string
   summary: string | null
   fullText: string | null
   sourceUrl: string | null
-  proposedDate: string
+  proposedDate: string | null
   passedDate: string | null
   enactedDate: string | null
+  confidence: string
   proposedBy: { id: string; slug: string; name: string } | null
   tags: { name: string }[]
 }
@@ -83,13 +84,13 @@ export default function LawDetailPage() {
 
   if (loading) {
     return (
-      <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
+      <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full min-h-[70vh]">
         <div className="animate-pulse space-y-6">
           <div className="h-4 w-32 bg-muted rounded" />
-          <div className="flex gap-2"><div className="h-5 w-16 bg-muted rounded" /><div className="h-5 w-24 bg-muted rounded" /></div>
-          <div className="h-10 bg-muted rounded w-3/4" />
-          <div className="h-4 bg-muted rounded w-full" />
-          <div className="h-4 bg-muted rounded w-2/3" />
+          <div className="flex gap-2"><div className="h-6 w-20 bg-muted rounded" /><div className="h-6 w-24 bg-muted rounded" /></div>
+          <div className="h-12 bg-muted rounded w-3/4 max-w-2xl" />
+          <div className="h-6 bg-muted rounded w-1/3" />
+          <div className="h-24 bg-muted rounded w-full mt-8" />
         </div>
       </PageTransition>
     )
@@ -97,13 +98,14 @@ export default function LawDetailPage() {
 
   if (error || !law) {
     return (
-      <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
+      <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full min-h-[70vh]">
         <Link href="/laws" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors w-fit">
           <ArrowLeft className="w-4 h-4" /> Back to Laws & Bills
         </Link>
-        <div className="bg-destructive/5 border border-destructive/20 rounded-md p-8 text-center">
-          <h2 className="text-xl font-bold mb-2">Law Not Found</h2>
-          <p className="text-muted-foreground">{error ?? "This law could not be found."}</p>
+        <div className="bg-destructive/5 border border-destructive/20 rounded-md p-12 text-center flex flex-col items-center">
+          <Info className="w-12 h-12 text-destructive mb-4 opacity-80" />
+          <h2 className="text-2xl font-bold mb-2">Record Not Found</h2>
+          <p className="text-muted-foreground">{error ?? "This legislative record could not be located in our database."}</p>
         </div>
       </PageTransition>
     )
@@ -113,183 +115,203 @@ export default function LawDetailPage() {
   const timeline: { label: string; date: string | null; isCurrent: boolean }[] = []
   if (law.enactedDate) timeline.push({ label: "Enacted Into Law", date: law.enactedDate, isCurrent: law.status === "ENACTED" })
   if (law.passedDate) timeline.push({ label: "Passed Parliament Vote", date: law.passedDate, isCurrent: law.status === "PASSED" })
-  timeline.push({ label: "Introduced to Floor", date: law.proposedDate, isCurrent: law.status === "PROPOSED" || law.status === "COMMITTEE" || law.status === "DRAFT" })
-
-  const latestVote = votes[0]
+  timeline.push({ label: "Introduced to Floor", date: law.proposedDate, isCurrent: ["PROPOSED", "COMMITTEE", "DRAFT"].includes(law.status) })
 
   return (
     <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
 
-      {/* Breadcrumbs & Metadata Header */}
-      <div className="flex flex-col gap-6">
-        <Link href="/laws" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
-          <ArrowLeft className="w-4 h-4" /> Back to Laws & Bills
-        </Link>
+      {/* Breadcrumbs */}
+      <Link href="/laws" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
+        <ArrowLeft className="w-4 h-4" /> Back to Laws & Bills
+      </Link>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <StatusBadge status={lawStatusToDisplay(law.status)}>{law.status}</StatusBadge>
-            <span className="text-sm font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-sm flex items-center gap-1.5">
+      {/* Hero Section */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <StatusBadge status={lawStatusToDisplay(law.status)}>{law.status}</StatusBadge>
+          <StatusBadge status="neutral">{law.category}</StatusBadge>
+          {law.code && (
+            <span className="text-sm font-mono font-medium text-muted-foreground bg-muted/60 border border-border px-2 py-0.5 rounded-sm flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5" /> {law.code}
             </span>
-            <StatusBadge status="neutral">{law.category}</StatusBadge>
-          </div>
-
-          <h1 className="text-3xl md:text-5xl font-display font-bold leading-tight">{law.title}</h1>
-          {law.titleNepali && <p className="text-lg text-muted-foreground">{law.titleNepali}</p>}
-
-          <p className="text-lg text-muted-foreground max-w-4xl leading-relaxed">{law.summary}</p>
+          )}
+          {law.confidence === "VERIFIED" && (
+            <span className="flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase text-success bg-success/10 px-2.5 py-1 rounded-sm">
+              <BadgeCheck className="w-4 h-4" /> Verified Data
+            </span>
+          )}
         </div>
+
+        <div className="flex flex-col gap-3">
+          <h1 className="text-3xl md:text-5xl font-display font-bold leading-tight tracking-tight text-foreground">
+            {law.title}
+          </h1>
+          {law.titleNepali && (
+            <h2 className="text-xl md:text-2xl font-medium text-muted-foreground font-display">
+              {law.titleNepali}
+            </h2>
+          )}
+        </div>
+
+        {law.summary && (
+          <div className="bg-muted/30 border border-border p-6 rounded-md">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+              <Info className="w-4 h-4" /> Executive Summary
+            </h3>
+            <p className="text-lg text-foreground leading-relaxed">
+              {law.summary}
+            </p>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-
-        {/* LEFT COLUMN */}
-        <div className="lg:col-span-8 flex flex-col gap-10">
-
-          {/* Timeline Milestones */}
-          <section className="flex flex-col gap-4">
-            <h2 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-2">
-              <History className="w-5 h-5 text-muted-foreground" /> Legislative Timeline
-            </h2>
-            <div className="flex flex-col gap-4 bg-card border border-border rounded-md p-5 md:p-6">
-              {timeline.map((step, i) => (
-                <div key={step.label}>
-                  <div className="flex items-start gap-4">
-                    <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${step.isCurrent ? "bg-primary" : "bg-muted-foreground"}`} />
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <span className="font-semibold">{step.label}</span>
-                        <span className="text-sm text-muted-foreground">{step.date ? formatDate(step.date) : "Pending"}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {i < timeline.length - 1 && <div className="w-px h-6 bg-border ml-1 my-[-8px]" />}
-                </div>
-              ))}
-            </div>
-          </section>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mt-2">
+        {/* LEFT COLUMN: Main Content */}
+        <div className="lg:col-span-8 flex flex-col gap-12">
 
           {/* Full Text / Key Provisions */}
           {law.fullText && (
-            <section className="flex flex-col gap-4">
-              <h2 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-2">
-                <Scale className="w-5 h-5 text-muted-foreground" /> Key Provisions & Impact
+            <section className="flex flex-col gap-5">
+              <h2 className="text-2xl font-display font-bold flex items-center gap-2 border-b border-border pb-3">
+                <Scale className="w-6 h-6 text-primary" /> Key Provisions & Impact
               </h2>
-              <div className="prose prose-slate dark:prose-invert max-w-none text-muted-foreground text-base leading-loose">
-                <p>{law.fullText}</p>
+              <div className="prose prose-slate dark:prose-invert max-w-none text-muted-foreground text-base leading-loose whitespace-pre-wrap">
+                {law.fullText}
               </div>
             </section>
           )}
 
           {/* Vote Breakdown Details */}
           {votes.length > 0 && (
-            <section className="flex flex-col gap-4">
-              <h2 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-2">
-                <Users className="w-5 h-5 text-muted-foreground" /> Vote Records
+            <section className="flex flex-col gap-5">
+              <h2 className="text-2xl font-display font-bold flex items-center gap-2 border-b border-border pb-3">
+                <Users className="w-6 h-6 text-primary" /> Vote Records
               </h2>
-              {votes.map((vote) => {
-                const total = vote.breakdown.yea + vote.breakdown.nay + vote.breakdown.abstain + vote.breakdown.absent
-                return (
-                  <div key={vote.id} className="bg-card border border-border rounded-md p-5">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <StatusBadge status={vote.outcome === "PASSED" ? "success" : "destructive"}>{vote.outcome}</StatusBadge>
-                      <span className="text-sm text-muted-foreground">{formatDate(vote.date)}</span>
-                      <StatusBadge status="neutral">{vote.type.replace("_", " ")}</StatusBadge>
+              <div className="flex flex-col gap-4">
+                {votes.map((vote) => (
+                  <div key={vote.id} className="bg-card border border-border rounded-md p-6 hover:shadow-sm transition-shadow">
+                    <div className="flex justify-between items-start mb-4 gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <StatusBadge status={vote.outcome === "PASSED" ? "success" : "destructive"}>{vote.outcome}</StatusBadge>
+                          <StatusBadge status="neutral">{vote.type.replace("_", " ")}</StatusBadge>
+                        </div>
+                        <p className="font-medium text-foreground">{vote.description}</p>
+                      </div>
+                      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap bg-muted px-2.5 py-1 rounded-sm">
+                        {formatDate(vote.date)}
+                      </span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">{vote.description}</p>
-                    {/* Stacked bar */}
-                    <div className="flex h-3 w-full rounded-sm overflow-hidden bg-muted mb-2">
-                      {vote.breakdown.yea > 0 && <div className="bg-success h-full" style={{ width: `${(vote.breakdown.yea / total) * 100}%` }} />}
-                      {vote.breakdown.nay > 0 && <div className="bg-destructive h-full" style={{ width: `${(vote.breakdown.nay / total) * 100}%` }} />}
-                      {vote.breakdown.abstain > 0 && <div className="bg-warning h-full" style={{ width: `${(vote.breakdown.abstain / total) * 100}%` }} />}
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
-                      <span>Yea: <strong className="text-foreground">{vote.breakdown.yea}</strong></span>
-                      <span>Nay: <strong className="text-foreground">{vote.breakdown.nay}</strong></span>
-                      <span>Abstain: <strong className="text-foreground">{vote.breakdown.abstain}</strong></span>
-                      <span>Absent: <strong className="text-foreground">{vote.breakdown.absent}</strong></span>
+                    
+                    {/* Breakdown Bar */}
+                    <div className="flex flex-col gap-2 mt-6">
+                      <div className="flex w-full h-3 rounded-sm overflow-hidden bg-muted gap-0.5">
+                        {vote.breakdown.yea > 0 && <div className="bg-success h-full" style={{ width: `${(vote.breakdown.yea / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
+                        {vote.breakdown.nay > 0 && <div className="bg-destructive h-full" style={{ width: `${(vote.breakdown.nay / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
+                        {vote.breakdown.abstain > 0 && <div className="bg-warning h-full" style={{ width: `${(vote.breakdown.abstain / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
+                        {vote.breakdown.absent > 0 && <div className="bg-muted-foreground/30 h-full" style={{ width: `${(vote.breakdown.absent / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
+                      </div>
+                      <div className="flex flex-wrap justify-between text-xs font-medium text-muted-foreground mt-1">
+                        <span className="text-success">{vote.breakdown.yea} Yea</span>
+                        <span className="text-destructive">{vote.breakdown.nay} Nay</span>
+                        <span className="text-warning">{vote.breakdown.abstain} Abstain</span>
+                        <span>{vote.breakdown.absent} Absent</span>
+                      </div>
                     </div>
                   </div>
-                )
-              })}
+                ))}
+              </div>
             </section>
           )}
 
+          {(!law.fullText && votes.length === 0) && (
+            <div className="py-12 text-center border border-border border-dashed rounded-md bg-card/50">
+              <Info className="w-8 h-8 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground">More details and voting records will be available once the bill progresses.</p>
+            </div>
+          )}
+
+        </div>
+
+        {/* RIGHT COLUMN: Sidebar (Timeline & Meta) */}
+        <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-24">
+          
+          {/* Action Card */}
           {law.sourceUrl && (
-            <div>
-              <Button variant="outline" className="gap-2" asChild>
-                <a href={law.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-4 h-4" /> View Original Source
+            <div className="bg-primary text-primary-foreground rounded-md p-6 flex flex-col gap-4 shadow-sm">
+              <h3 className="font-bold font-display text-lg">Official Source</h3>
+              <p className="text-sm text-primary-foreground/80 leading-relaxed">
+                Read the original raw documents and filings directly from the official parliamentary source.
+              </p>
+              <Button asChild variant="secondary" className="w-full mt-2 font-bold shadow-sm">
+                <a href={law.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+                  View Full Source <ExternalLink className="w-4 h-4" />
                 </a>
               </Button>
             </div>
           )}
-        </div>
 
-        {/* RIGHT COLUMN: Sidebar */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className="bg-card border border-border rounded-md p-6 flex flex-col gap-5 sticky top-[88px]">
-            <h3 className="font-display font-bold text-lg border-b border-border pb-2">Sponsorship</h3>
-
-            {law.proposedBy ? (
-              <Link href={`/members/${law.proposedBy.slug}`} className="flex items-center gap-3 hover:bg-secondary/50 p-2 -m-2 rounded-md transition-colors">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center border border-border">
-                  <Users className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-semibold">{law.proposedBy.name}</span>
-                  <span className="text-xs text-muted-foreground">Primary Sponsor</span>
-                </div>
-              </Link>
-            ) : (
-              <span className="text-sm text-muted-foreground">No sponsor information</span>
-            )}
-
-            <h3 className="font-display font-bold text-lg border-b border-border pb-2 mt-2">RSP Voting Record</h3>
-
-            {latestVote ? (
-              <>
-                <div className="flex items-center gap-2">
-                  {latestVote.outcome === "PASSED" ? (
-                    <CheckCircle2 className="w-5 h-5 text-success" />
-                  ) : (
-                    <X className="w-5 h-5 text-destructive" />
-                  )}
-                  <span className={`font-semibold ${latestVote.outcome === "PASSED" ? "text-success" : "text-destructive"}`}>
-                    {latestVote.breakdown.yea > 0 && latestVote.breakdown.nay === 0
-                      ? `Unanimous Yea (${latestVote.breakdown.yea})`
-                      : `${latestVote.breakdown.yea} Yea / ${latestVote.breakdown.nay} Nay`}
-                  </span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {latestVote.description}
-                </div>
-                <Link href="/votes" className="text-sm font-medium text-primary hover:underline mt-2 inline-block w-fit">
-                  View Full Roll Call
+          {/* Meta Information Card */}
+          <div className="bg-card border border-border rounded-md p-6 flex flex-col gap-6">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Sponsorship</h3>
+              {law.proposedBy ? (
+                <Link href={`/members/${law.proposedBy.slug}`} className="flex items-center gap-3 group">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    {law.proposedBy.name.charAt(0)}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">{law.proposedBy.name}</span>
+                    <span className="text-xs text-muted-foreground">Primary Sponsor</span>
+                  </div>
                 </Link>
-              </>
-            ) : (
-              <div className="text-sm text-muted-foreground flex flex-col gap-2">
-                <span className="flex items-center gap-2 p-3 bg-muted/50 rounded-sm">
-                  Awaiting vote placement.
-                </span>
-              </div>
-            )}
+              ) : (
+                <span className="text-sm text-muted-foreground italic">No primary sponsor recorded</span>
+              )}
+            </div>
 
             {law.tags.length > 0 && (
-              <>
-                <h3 className="font-display font-bold text-lg border-b border-border pb-2 mt-2">Tags</h3>
+              <div className="border-t border-border pt-5">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2"><Tag className="w-4 h-4"/> Topics</h3>
                 <div className="flex flex-wrap gap-2">
-                  {law.tags.map((tag) => (
-                    <StatusBadge key={tag.name} status="neutral">{tag.name}</StatusBadge>
+                  {law.tags.map(tag => (
+                    <span key={tag.name} className="text-xs font-medium bg-muted text-muted-foreground px-2.5 py-1 rounded-sm">
+                      {tag.name}
+                    </span>
                   ))}
                 </div>
-              </>
+              </div>
             )}
           </div>
-        </div>
 
+          {/* Timeline Milestones */}
+          <div className="bg-card border border-border rounded-md p-6 flex flex-col gap-6">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <History className="w-4 h-4" /> Legislative Timeline
+            </h3>
+            <div className="flex flex-col gap-5">
+              {timeline.map((step, i) => (
+                <div key={step.label} className="relative pl-6">
+                  {/* Timeline Line */}
+                  {i < timeline.length - 1 && (
+                    <div className="absolute left-[7px] top-[24px] bottom-[-20px] w-px bg-border" />
+                  )}
+                  {/* Timeline Dot */}
+                  <div className={`absolute left-0 top-[6px] w-3.5 h-3.5 rounded-full border-2 border-card ${step.isCurrent ? "bg-primary ring-2 ring-primary/20" : "bg-muted-foreground"}`} />
+                  
+                  <div className="flex flex-col gap-1">
+                    <span className={`font-semibold ${step.isCurrent ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</span>
+                    <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {step.date ? formatDate(step.date) : "Pending"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
       </div>
     </PageTransition>
   )

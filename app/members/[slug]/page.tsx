@@ -144,7 +144,11 @@ export default function MemberDetailPage() {
       <div className="flex flex-col md:flex-row items-center md:items-stretch gap-6 md:gap-8 bg-card border border-border rounded-md p-6 md:p-10">
         <div className="w-32 h-32 md:w-48 md:h-48 rounded-full bg-secondary border-4 border-background shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
           {member.photoUrl ? (
-            <img src={member.photoUrl} alt={member.name} className="w-full h-full object-cover" />
+            <img
+              src={member.photoUrl.replace("https://api.rspnepal.org/images/", "/_proxy/rsp-images/")}
+              alt={member.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <User className="w-16 h-16 md:w-20 md:h-20 text-muted-foreground" />
           )}

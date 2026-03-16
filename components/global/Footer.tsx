@@ -1,47 +1,211 @@
 import Link from "next/link"
-import { Bell } from "lucide-react"
+import {
+  Bell,
+  Scale,
+  Users,
+  FileText,
+  BarChart3,
+  Calendar,
+  Shield,
+  BookOpen,
+  ExternalLink,
+  Github,
+  Mail,
+  ArrowUpRight,
+} from "lucide-react"
+
+const ACCOUNTABILITY_LINKS = [
+  { href: "/members", label: "Members & MPs", icon: Users },
+  { href: "/laws", label: "Laws & Bills", icon: Scale },
+  { href: "/promises", label: "Promise Tracker", icon: FileText },
+  { href: "/votes", label: "Voting Records" },
+  { href: "/appointments", label: "Appointments" },
+  { href: "/controversies", label: "Controversies" },
+]
+
+const EXPLORE_LINKS = [
+  { href: "/press", label: "Press & News", icon: BookOpen },
+  { href: "/events", label: "Events", icon: Calendar },
+  { href: "/manifesto", label: "Manifesto", icon: FileText },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/transparency", label: "Transparency", icon: Shield },
+  { href: "/timeline", label: "Timeline" },
+]
+
+const PROJECT_LINKS = [
+  { href: "/about", label: "About & Methodology" },
+  { href: "/about", label: "Data Sources" },
+  { href: "/about#contribute", label: "Report an Issue" },
+]
 
 export function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer className="border-t border-border bg-background mt-auto">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-2 flex flex-col gap-4">
-            <Link href="/" className="flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md w-fit">
-              <Bell className="w-5 h-5 text-primary" />
-              <span className="font-display font-bold space-x-1">
-                <span>RSP</span>
-                <span className="text-muted-foreground font-normal">Watch</span>
-              </span>
-            </Link>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              An independent public accountability tracker for the Rastriya Swatantra Party's performance in government. Not affiliated with the RSP.
+    <footer className="border-t border-border bg-card/50 mt-auto">
+      {/* CTA Banner */}
+      <div className="border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex flex-col gap-2 max-w-lg">
+            <h3 className="font-display font-bold text-lg md:text-xl">
+              Help keep democracy accountable
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              RSP Watch is an open-source, community-driven project. Spot
+              inaccurate data? Have a suggestion? Contribute to the project.
             </p>
           </div>
-          
-          <div className="flex flex-col gap-3">
-            <h3 className="font-medium text-sm">Navigation</h3>
-            <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href="/laws" className="hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">Laws & Bills</Link>
-              <Link href="/promises" className="hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">Promises</Link>
-              <Link href="/members" className="hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">Members & MPs</Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/about#contribute"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Mail className="w-4 h-4" />
+              Get Involved
+            </Link>
+            <Link
+              href="/transparency"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-border bg-background font-medium text-sm hover:bg-secondary/60 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Shield className="w-4 h-4" />
+              View Data Sources
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Footer Grid */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-14">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-10 md:gap-8">
+          {/* Brand Column */}
+          <div className="col-span-2 md:col-span-4 flex flex-col gap-5">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md w-fit"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Bell className="w-4.5 h-4.5 text-primary" />
+              </div>
+              <span className="font-display font-bold text-xl tracking-tight">
+                RSP <span className="text-muted-foreground font-normal">Watch</span>
+              </span>
+            </Link>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+              An independent, non-partisan public accountability tracker for
+              Nepal&apos;s Rastriya Swatantra Party. Monitoring promises, votes,
+              and governance in real time.
+            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
+              </span>
+              <span className="text-xs text-muted-foreground ml-1.5">
+                Data auto-updated daily
+              </span>
+            </div>
+          </div>
+
+          {/* Accountability Links */}
+          <div className="col-span-1 md:col-span-3 flex flex-col gap-4">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground">
+              Accountability
+            </h4>
+            <nav className="flex flex-col gap-2.5">
+              {ACCOUNTABILITY_LINKS.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  {link.icon && (
+                    <link.icon className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                  )}
+                  {link.label}
+                </Link>
+              ))}
             </nav>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <h3 className="font-medium text-sm">About</h3>
-            <nav className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <Link href="/about" className="hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">Methodology</Link>
-              <a href="#" className="hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">Data Sources</a>
-              <a href="#" className="hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">Report an Issue</a>
+          {/* Explore Links */}
+          <div className="col-span-1 md:col-span-3 flex flex-col gap-4">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground">
+              Explore
+            </h4>
+            <nav className="flex flex-col gap-2.5">
+              {EXPLORE_LINKS.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  {link.icon && (
+                    <link.icon className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                  )}
+                  {link.label}
+                </Link>
+              ))}
             </nav>
           </div>
+
+          {/* Project Links */}
+          <div className="col-span-2 md:col-span-2 flex flex-col gap-4">
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-foreground">
+              Project
+            </h4>
+            <nav className="flex flex-col gap-2.5">
+              {PROJECT_LINKS.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors w-fit outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-3 mt-2">
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-md border border-border bg-background hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="GitHub"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+              <a
+                href="https://rspnepal.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-md border border-border bg-background hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="RSP Official"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
         </div>
-        
-        <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} RSP Watch Project. Open source data.</p>
-          <div className="flex items-center gap-4">
-            <span>Last updated: March 15, 2026</span>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="border-t border-border">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground">
+          <p>
+            &copy; {year} RSP Watch Project. Open-source civic data.
+          </p>
+          <div className="flex items-center gap-1.5">
+            <span>Not affiliated with</span>
+            <a
+              href="https://rspnepal.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors"
+            >
+              Rastriya Swatantra Party
+              <ArrowUpRight className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </div>

@@ -14,6 +14,7 @@ export async function POST(
   try {
     const { job } = await params
     const validJobs = [
+      "rsp-official",
       "parliament-bills",
       "parliament-votes",
       "parliament-members",

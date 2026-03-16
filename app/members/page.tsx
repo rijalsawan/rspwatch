@@ -1,62 +1,91 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState, useMemo } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { MemberCard } from "@/components/domain/MemberCard"
 import { StatCard } from "@/components/shared/StatCard"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Search, SlidersHorizontal, Users, Building2, ChevronDown } from "lucide-react"
 
 interface MemberData {
   id: string
   slug: string
   name: string
+  nameNepali?: string | null
   role: string
   constituency: string
   province: string
   attendancePercent: number | null
+  photoUrl?: string | null
+  phone?: string | null
+  sourceUrl?: string | null
 }
 
-const PROVINCES = ["All Provinces", "Koshi", "Madhesh", "Bagmati", "Gandaki", "Lumbini", "Karnali", "Sudurpashchim"]
+const PROVINCES = ["All Provinces", "National", "Koshi", "Madhesh", "Bagmati", "Gandaki", "Lumbini", "Karnali", "Sudurpashchim"]
+const SORT_OPTIONS = [
+  { value: "name", label: "Name" },
+  { value: "role", label: "Role" },
+  { value: "province", label: "Province" },
+  { value: "attendance", label: "Attendance" },
+]
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<MemberData[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [province, setProvince] = useState("All Provinces")
+  const [memberType, setMemberType] = useState<"all" | "executive" | "mp">("all")
+  const [sortBy, setSortBy] = useState("name")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
 
-  const fetchMembers = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ limit: "200" })
-      if (search) params.set("q", search)
-      if (province !== "All Provinces") params.set("province", province)
+  // Construct the API URL based on current filters (excluding search for client-side filtering)
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "200" })
+    if (province !== "All Provinces") params.set("province", province)
+    if (memberType !== "all") params.set("type", memberType)
+    params.set("sort", sortBy)
+    params.set("order", sortOrder)
 
-      const res = await fetch(`/api/members?${params}`)
-      const json = await res.json()
-      if (json.data) {
-        setMembers(json.data)
-        setTotal(json.meta?.total ?? json.data.length)
-      }
-    } catch (e) {
-      console.error("Failed to load members:", e)
-    } finally {
-      setLoading(false)
-    }
-  }, [search, province])
+    return `/api/members?${params}`
+  }, [province, memberType, sortBy, sortOrder])
 
-  useEffect(() => {
-    const timer = setTimeout(fetchMembers, search ? 300 : 0)
-    return () => clearTimeout(timer)
-  }, [fetchMembers, search])
+  // Use cached fetch with constructed URL
+  const { data: membersResponse, loading } = useCachedFetch<{data: MemberData[], meta?: {total: number}}>(apiUrl)
 
-  const cabinetCount = members.filter(m => m.role !== "Member of Parliament").length
+  // Extract data from response
+  const allMembers = membersResponse?.data ?? []
+
+  // Client-side filtering for search (avoids API calls on every keystroke)
+  const members = search
+    ? allMembers.filter(m =>
+        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        (m.nameNepali && m.nameNepali.includes(search)) ||
+        m.constituency.toLowerCase().includes(search.toLowerCase()) ||
+        m.province.toLowerCase().includes(search.toLowerCase())
+      )
+    : allMembers
+
+  const total = membersResponse?.meta?.total ?? allMembers.length
+
+  const executiveCount = members.filter(m =>
+    m.constituency === "Central Committee" || m.province === "National"
+  ).length
+  const mpCount = members.filter(m =>
+    m.constituency !== "Central Committee" && m.province !== "National"
+  ).length
   const avgAttendance = members.length > 0
-    ? Math.round(members.reduce((sum, m) => sum + (m.attendancePercent ?? 0), 0) / members.length)
+    ? Math.round(members.filter(m => m.attendancePercent != null).reduce((sum, m) => sum + (m.attendancePercent ?? 0), 0) / Math.max(1, members.filter(m => m.attendancePercent != null).length))
     : 0
+
+  const resetFilters = () => {
+    setSearch("")
+    setProvince("All Provinces")
+    setMemberType("all")
+    setSortBy("name")
+    setSortOrder("asc")
+  }
 
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
@@ -67,17 +96,35 @@ export default function MembersPage() {
         </h1>
         <p className="text-lg text-muted-foreground">
           Explore the profiles, attendance records, and voting history of all
-          elected RSP representatives currently serving in the federal parliament.
+          RSP representatives — from Central Committee executives to elected MPs.
         </p>
       </div>
 
       {/* Stats Dash */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Elected MPs" value={total} />
-        <StatCard label="Cabinet Ministers" value={cabinetCount} />
-        <StatCard label="Avg. Attendance" value={`${avgAttendance}%`} trend={{ value: "Since March 2026", positive: true }} />
-        <StatCard label="Provinces Represented" value={new Set(members.map(m => m.province)).size} />
+        <StatCard label="Total Members" value={total} />
+        <StatCard label="Executive Committee" value={executiveCount} />
+        <StatCard label="Elected MPs" value={mpCount} />
+        <StatCard label="Avg. Attendance" value={`${avgAttendance}%`} trend={{ value: "Since March 2026", positive: avgAttendance >= 70 }} />
       </div>
+
+      {/* Member Type Tabs */}
+      <Tabs value={memberType} onValueChange={(v) => setMemberType(v as typeof memberType)} className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="all" className="gap-2">
+            <Users className="w-4 h-4" />
+            All Members
+          </TabsTrigger>
+          <TabsTrigger value="executive" className="gap-2">
+            <Building2 className="w-4 h-4" />
+            Executive
+          </TabsTrigger>
+          <TabsTrigger value="mp" className="gap-2">
+            <Users className="w-4 h-4" />
+            MPs
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Filter and Content */}
       <div className="flex flex-col gap-6">
@@ -95,6 +142,7 @@ export default function MembersPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Province filter */}
             <div className="relative inline-flex">
               <select
                 value={province}
@@ -106,13 +154,37 @@ export default function MembersPage() {
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown className="h-4 w-4" />
               </div>
             </div>
 
-            <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={() => { setSearch(""); setProvince("All Provinces") }}>
+            {/* Sort field */}
+            <div className="relative inline-flex">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-10 w-full md:w-auto appearance-none rounded-md border border-input bg-background pl-3 pr-10 py-2 text-sm ring-offset-background cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>Sort: {opt.label}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </div>
+
+            {/* Sort order toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              className="h-10"
+            >
+              {sortOrder === "asc" ? "A → Z" : "Z → A"}
+            </Button>
+
+            <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={resetFilters}>
               <SlidersHorizontal className="w-4 h-4" />
               <span className="sm:hidden lg:inline">Reset</span>
             </Button>
@@ -123,7 +195,11 @@ export default function MembersPage() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between text-sm font-medium text-muted-foreground px-2">
             <span>Showing {members.length} of {total} members</span>
-            <span className="hidden sm:inline">Sort by: Role (Highest First)</span>
+            <span className="hidden sm:inline">
+              {memberType === "executive" ? "Central Committee Members" :
+               memberType === "mp" ? "Elected Representatives" :
+               "All Members"}
+            </span>
           </div>
 
           {loading ? (
@@ -145,10 +221,13 @@ export default function MembersPage() {
                   key={member.id}
                   id={member.slug}
                   name={member.name}
+                  nameNepali={member.nameNepali ?? undefined}
                   role={member.role}
                   constituency={member.constituency}
                   province={member.province}
                   attendance={member.attendancePercent ?? undefined}
+                  photoUrl={member.photoUrl ?? undefined}
+                  phone={member.phone ?? undefined}
                 />
               ))}
             </StaggerList>

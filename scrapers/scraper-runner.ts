@@ -6,6 +6,7 @@ import { scrapeParliamentVotes } from "./sources/parliament-votes"
 import { scrapeParliamentMembers } from "./sources/parliament-members"
 import { scrapeKathmanduPost } from "./sources/kathmandu-post"
 import { scrapeOnlineKhabar } from "./sources/onlinekhabar"
+import { scrapeRspOfficial } from "./sources/rsp-official"
 import { closeBrowser } from "./utils/browser"
 import { logScrapeRun } from "./utils/logger"
 
@@ -21,6 +22,7 @@ export interface RunResult {
 type ScraperFn = () => Promise<{ records: unknown[]; created: number; updated: number }>
 
 const SCRAPERS: Record<string, ScraperFn> = {
+  "rsp-official": scrapeRspOfficial,
   "parliament-bills": scrapeParliamentBills,
   "parliament-votes": scrapeParliamentVotes,
   "parliament-members": scrapeParliamentMembers,

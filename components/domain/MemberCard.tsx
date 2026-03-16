@@ -1,41 +1,68 @@
 import Link from "next/link"
-import { User, MapPin, Briefcase } from "lucide-react"
+import Image from "next/image"
+import { User, MapPin, Briefcase, Phone } from "lucide-react"
 
 export interface MemberCardProps {
   id: string
   name: string
+  nameNepali?: string
   role: string
   constituency: string
   province: string
   attendance?: number
+  photoUrl?: string
+  phone?: string
 }
 
 export function MemberCard({
   id,
   name,
+  nameNepali,
   role,
   constituency,
   province,
   attendance,
+  photoUrl,
+  phone,
 }: MemberCardProps) {
   const isMinister = role.toLowerCase().includes("minister") || role.toLowerCase().includes("prime")
-  
+
+  // Proxy RSP API images through our server to avoid CORP same-origin blocking
+  const resolvedPhoto = photoUrl?.replace(
+    "https://api.rspnepal.org/images/",
+    "/_proxy/rsp-images/"
+  )
+
   return (
-    <Link 
+    <Link
       href={`/members/${id}`}
       className="flex flex-col bg-card border border-border rounded-md hover:border-primary/50 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="p-5 flex flex-col items-center text-center gap-4 border-b border-border bg-muted/20">
-        {/* Avatar Placeholder */}
+        {/* Avatar */}
         <div className="w-20 h-20 rounded-full bg-secondary border-2 border-border flex items-center justify-center group-hover:border-primary/30 group-hover:bg-primary/5 transition-colors overflow-hidden">
-          <User className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+          {resolvedPhoto ? (
+            <Image
+              src={resolvedPhoto}
+              alt={name}
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <User className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+          )}
         </div>
-        
+
         {/* Name and Role */}
         <div>
           <h3 className="text-lg font-bold font-display group-hover:text-primary transition-colors">
             {name}
           </h3>
+          {nameNepali && (
+            <p className="text-sm text-muted-foreground mt-0.5">{nameNepali}</p>
+          )}
           <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-sm mt-2 inline-block ${
             isMinister ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
           }`}>
@@ -54,13 +81,20 @@ export function MemberCard({
           </div>
         </div>
 
+        {phone && (
+          <div className="flex items-center gap-2.5 text-muted-foreground">
+            <Phone className="w-4 h-4 shrink-0" />
+            <span className="text-xs font-mono">{phone}</span>
+          </div>
+        )}
+
         {attendance !== undefined && (
           <div className="flex items-center gap-2.5 text-muted-foreground mt-auto pt-3 border-t border-border">
             <Briefcase className="w-4 h-4 shrink-0" />
             <div className="flex w-full items-center justify-between">
               <span className="text-xs">Parliament Attendance</span>
               <span className={`text-xs font-bold ${
-                attendance >= 90 ? 'text-success' : 
+                attendance >= 90 ? 'text-success' :
                 attendance >= 75 ? 'text-warning' : 'text-destructive'
               }`}>
                 {attendance}%

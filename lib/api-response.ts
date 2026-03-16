@@ -29,11 +29,13 @@ export function paginated<T>(
   data: T[],
   opts: { total: number; page: number; limit: number }
 ) {
+  const totalPages = Math.ceil(opts.total / opts.limit) || 1
   return success(data, {
     total: opts.total,
     page: opts.page,
     limit: opts.limit,
-    hasMore: opts.page * opts.limit < opts.total,
+    totalPages,
+    hasMore: opts.page < totalPages,
   })
 }
 

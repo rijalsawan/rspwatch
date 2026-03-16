@@ -90,6 +90,8 @@ model Member {
   name              String    // English name
   nameNepali        String?   // नेपालीमा नाम (Devanagari)
   photoUrl          String?
+  phone             String?   // Contact phone number
+  designation       String?   // Original designation from party (e.g. "अध्यक्ष")
   constituency      String
   province          String
   role              String    // e.g. "Prime Minister", "Member of Parliament"

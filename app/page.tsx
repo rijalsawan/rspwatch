@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StatCard } from "@/components/shared/StatCard"
 import { ActivityFeedItem } from "@/components/shared/ActivityFeedItem"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
 import { StaggerList } from "@/components/animations/StaggerList"
-import { ArrowRight, BookOpen, CheckCircle2, Users, FileText } from "lucide-react"
+import { ArrowRight, BookOpen, CheckCircle2, Users, FileText, Calendar } from "lucide-react"
 import Link from "next/link"
 
 interface StatsData {
@@ -36,6 +36,18 @@ interface LawItem {
   category: string
   summary: string | null
   proposedBy: { name: string } | null
+}
+
+interface PressItem {
+  id: string
+  slug: string
+  title: string
+  titleNp: string
+  excerpt: string
+  coverImage: string | null
+  tags: string[]
+  sourceUrl: string
+  date: string
 }
 
 function activityTypeToCategory(type: string): string {
@@ -96,37 +108,23 @@ function formatDate(dateStr: string): string {
 }
 
 export default function Home() {
-  const [stats, setStats] = useState<StatsData | null>(null)
-  const [feed, setFeed] = useState<FeedItem[]>([])
-  const [featuredLaw, setFeaturedLaw] = useState<LawItem | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Use cached fetch for all API calls
+  const { data: stats, loading: statsLoading } = useCachedFetch<{data: StatsData}>("/api/stats")
+  const { data: feedResponse, loading: feedLoading } = useCachedFetch<{data: FeedItem[]}>("/api/feed?limit=3")
+  const { data: lawsResponse, loading: lawsLoading } = useCachedFetch<{data: LawItem[]}>("/api/laws?limit=1")
+  const { data: pressResponse, loading: pressLoading } = useCachedFetch<{data: PressItem[]}>("/api/news?limit=2")
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [statsRes, feedRes, lawsRes] = await Promise.all([
-          fetch("/api/stats"),
-          fetch("/api/feed?limit=3"),
-          fetch("/api/laws?limit=1"),
-        ])
-        const statsJson = await statsRes.json()
-        const feedJson = await feedRes.json()
-        const lawsJson = await lawsRes.json()
+  // Extract data from cached responses
+  const statsData = stats?.data ?? null
+  const feed = feedResponse?.data ?? []
+  const featuredLaw = lawsResponse?.data?.[0] ?? null
+  const pressItems = pressResponse?.data ?? []
 
-        if (statsJson.data) setStats(statsJson.data)
-        if (feedJson.data) setFeed(feedJson.data)
-        if (lawsJson.data?.[0]) setFeaturedLaw(lawsJson.data[0])
-      } catch (e) {
-        console.error("Failed to load dashboard data:", e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
+  // Overall loading state - true if any individual fetch is still loading
+  const loading = statsLoading || feedLoading || lawsLoading || pressLoading
 
-  const promisesByStatus = stats?.promisesByStatus ?? { KEPT: 0, IN_PROGRESS: 0, BROKEN: 0, NOT_STARTED: 0 }
-  const totalPromises = stats?.promisesTracked || 1
+  const promisesByStatus = statsData?.promisesByStatus ?? { KEPT: 0, IN_PROGRESS: 0, BROKEN: 0, NOT_STARTED: 0 }
+  const totalPromises = statsData?.promisesTracked || 1
   const keptPct = Math.round((promisesByStatus.KEPT / totalPromises) * 100)
   const inProgressPct = Math.round((promisesByStatus.IN_PROGRESS / totalPromises) * 100)
   const brokenPct = Math.round((promisesByStatus.BROKEN / totalPromises) * 100)
@@ -138,7 +136,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <StatusBadge status="primary" pulse>Live Tracker Active</StatusBadge>
           <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            {stats ? `Day ${stats.daysInPower} in Power` : "Loading..."}
+            {statsData ? `Day ${statsData.daysInPower} in Power` : "Loading..."}
           </span>
         </div>
         <h1 className="text-4xl md:text-6xl font-display font-bold leading-tight tracking-tight text-foreground">
@@ -154,17 +152,17 @@ export default function Home() {
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           [...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-md p-5 animate-pulse">
-              <div className="h-3 bg-muted rounded w-2/3 mb-3" />
-              <div className="h-8 bg-muted rounded w-1/3" />
+            <div key={i} className="bg-card border border-border p-6 rounded-md flex flex-col gap-2">
+              <div className="h-5 bg-muted rounded w-2/3 animate-pulse" />
+              <div className="h-10 bg-muted rounded w-1/3 animate-pulse mt-1" />
             </div>
           ))
         ) : (
           <>
-            <StatCard label="Total Laws Passed" value={stats?.lawsPassed ?? 0} />
-            <StatCard label="Promises Tracked" value={stats?.promisesTracked ?? 0} />
-            <StatCard label="Promises Kept" value={stats?.promisesKept ?? 0} trend={totalPromises > 1 ? { value: `${keptPct}% completion`, positive: true } : undefined} />
-            <StatCard label="Active MPs" value={stats?.activeMps ?? 0} />
+            <StatCard label="Total Laws Passed" value={statsData?.lawsPassed ?? 0} />
+            <StatCard label="Promises Tracked" value={statsData?.promisesTracked ?? 0} />
+            <StatCard label="Promises Kept" value={statsData?.promisesKept ?? 0} trend={totalPromises > 1 ? { value: `${keptPct}% completion`, positive: true } : undefined} />
+            <StatCard label="Active MPs" value={statsData?.activeMps ?? 0} />
           </>
         )}
       </section>
@@ -185,11 +183,18 @@ export default function Home() {
             </div>
 
             {loading ? (
-              <div className="bg-card border border-border rounded-md p-6 lg:p-8 animate-pulse">
-                <div className="flex gap-2 mb-4"><div className="h-5 w-16 bg-muted rounded" /><div className="h-5 w-24 bg-muted rounded" /></div>
-                <div className="h-7 bg-muted rounded w-3/4 mb-3" />
-                <div className="h-4 bg-muted rounded w-full mb-2" />
-                <div className="h-4 bg-muted rounded w-2/3" />
+              <div className="bg-card border border-border rounded-md p-6 lg:p-8 animate-pulse flex flex-col">
+                <div className="flex gap-2 mb-4"><div className="h-6 w-16 bg-muted rounded-full" /><div className="h-6 w-24 bg-muted rounded-full" /></div>
+                <div className="h-8 bg-muted rounded w-3/4 mb-3" />
+                <div className="space-y-2 mb-6">
+                  <div className="h-4 bg-muted rounded w-full" />
+                  <div className="h-4 bg-muted rounded w-full" />
+                  <div className="h-4 bg-muted rounded w-2/3" />
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
+                  <div className="h-4 bg-muted rounded w-32" />
+                  <div className="h-9 bg-muted rounded w-28" />
+                </div>
               </div>
             ) : featuredLaw ? (
               <div className="bg-card border border-border rounded-md p-6 lg:p-8 hover:border-primary/50 transition-colors group">
@@ -224,11 +229,23 @@ export default function Home() {
             <h2 className="text-2xl font-display font-bold">Latest Activity</h2>
             <div className="pt-2">
               {loading ? (
-                <div className="space-y-4">
+                <div className="space-y-0">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="animate-pulse flex gap-4">
-                      <div className="w-2 h-2 bg-muted rounded-full mt-2" />
-                      <div className="flex-1"><div className="h-4 bg-muted rounded w-1/2 mb-2" /><div className="h-3 bg-muted rounded w-3/4" /></div>
+                    <div key={i} className="relative pl-6 pb-8 animate-pulse">
+                      {i !== 2 && <div className="absolute left-1.5 top-2 bottom-0 w-px bg-border translate-x-[-0.5px]" />}
+                      <div className="absolute left-0 top-1.5 h-3 w-3 rounded-full bg-muted ring-4 ring-background" />
+                      
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-3 w-20 bg-muted rounded" />
+                          <div className="h-5 w-16 bg-muted rounded-full" />
+                        </div>
+                        <div className="h-5 w-3/4 bg-muted rounded mt-1" />
+                        <div className="space-y-1">
+                          <div className="h-4 w-full bg-muted rounded" />
+                          <div className="h-4 w-5/6 bg-muted rounded" />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -251,11 +268,124 @@ export default function Home() {
                 <div className="text-muted-foreground text-sm">No recent activity.</div>
               )}
             </div>
+            <Link href="/timeline" className="text-sm font-medium text-primary hover:underline underline-offset-4 flex items-center gap-1 mt-2">
+              View full timeline <ArrowRight className="w-4 h-4" />
+            </Link>
+          </section>
+
+          {/* Press / News Carousel */}
+          <section className="flex flex-col gap-4 pt-6 border-t border-border">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-display font-bold">Press & News</h2>
+              <Link href="/press" className="text-sm font-medium text-primary hover:underline underline-offset-4 flex items-center gap-1">
+                View all releases <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {loading ? (
+                <>
+                  <div className="rounded-md border border-border bg-card p-5 animate-pulse">
+                    <div className="h-5 w-24 bg-muted rounded mb-3" />
+                    <div className="h-5 bg-muted rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-muted rounded w-full mb-1" />
+                    <div className="h-4 bg-muted rounded w-2/3" />
+                  </div>
+                  <div className="rounded-md border border-border bg-card p-5 animate-pulse hidden sm:block">
+                    <div className="h-5 w-24 bg-muted rounded mb-3" />
+                    <div className="h-5 bg-muted rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-muted rounded w-full mb-1" />
+                    <div className="h-4 bg-muted rounded w-2/3" />
+                  </div>
+                </>
+              ) : pressItems.length > 0 ? (
+                pressItems.map((item, idx) => (
+                  <a
+                    key={item.id}
+                    href={item.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`group rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-sm transition-all flex flex-col overflow-hidden ${idx > 0 ? "hidden sm:flex" : ""}`}
+                  >
+                    {/* Cover image */}
+                    {item.coverImage && (
+                      <div className="h-36 overflow-hidden bg-muted shrink-0">
+                        <img
+                          src={item.coverImage}
+                          alt={item.titleNp || item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <div className="p-5 flex flex-col flex-1">
+                      {item.tags.length > 0 && (
+                        <span className="text-xs font-medium uppercase tracking-wider text-primary mb-2">
+                          {item.tags[0]}
+                        </span>
+                      )}
+                      <h3 className="font-bold text-base mb-2 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+                        {item.titleNp || item.title}
+                      </h3>
+                      {item.excerpt && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
+                          {item.excerpt}
+                        </p>
+                      )}
+                      <span className="text-xs text-muted-foreground mt-auto">
+                        {new Date(item.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      </span>
+                    </div>
+                  </a>
+                ))
+              ) : (
+                <div className="col-span-2 text-center py-8 text-muted-foreground">
+                  No press releases available yet.
+                </div>
+              )}
+            </div>
           </section>
         </div>
 
         {/* Right Col: Summaries & Quick Access */}
         <div className="lg:col-span-4 flex flex-col gap-8">
+
+          {/* This Week in Parliament */}
+          <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <h3 className="font-display font-bold text-lg">This Week</h3>
+              </div>
+            </div>
+            {loading ? (
+              <ul className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-muted mt-1.5 shrink-0" />
+                    <div className="flex-1 space-y-2 animate-pulse">
+                      <div className="h-4 bg-muted rounded w-full" />
+                      <div className="h-4 bg-muted rounded w-2/3" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : feed.length > 0 ? (
+              <ul className="space-y-4">
+                {feed.slice(0, 3).map((item) => (
+                  <li key={item.id} className="flex items-start gap-3 text-sm">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${activityTypeToStatus(item.type) === "warning" ? "bg-warning" : "bg-primary"}`} />
+                    <span className="text-muted-foreground">
+                      <span className="text-foreground font-medium">{activityTypeToCategory(item.type)}</span>
+                      {" — "}
+                      {item.title}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No recent activity.</p>
+            )}
+          </div>
 
           {/* Promise Tracker Widget */}
           <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-5">
@@ -310,9 +440,9 @@ export default function Home() {
           {/* Quick Access Menu */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Laws & Bills", icon: BookOpen, href: "/laws", count: `${stats?.lawsPassed ?? 0} Passed` },
-              { label: "Party MPs", icon: Users, href: "/members", count: `${stats?.activeMps ?? 0} Members` },
-              { label: "Floor Votes", icon: CheckCircle2, href: "/votes", count: `${stats?.totalVotes ?? 0} Sessions` },
+              { label: "Laws & Bills", icon: BookOpen, href: "/laws", count: `${statsData?.lawsPassed ?? 0} Passed` },
+              { label: "Party MPs", icon: Users, href: "/members", count: `${statsData?.activeMps ?? 0} Members` },
+              { label: "Floor Votes", icon: CheckCircle2, href: "/votes", count: `${statsData?.totalVotes ?? 0} Sessions` },
               { label: "Statements", icon: FileText, href: "/timeline", count: "Full Timeline" },
             ].map((item) => (
               <Link

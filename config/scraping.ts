@@ -48,4 +48,11 @@ export const SOURCES: Record<string, SourceConfig> = {
     maxRetries: defaultRetries,
     engine: "cheerio",
   },
+  "rsp-official": {
+    name: "RSP Official Website",
+    baseUrl: "https://api.rspnepal.org",
+    requestDelayMs: 1000,
+    maxRetries: defaultRetries,
+    engine: "cheerio", // JSON API, no browser needed
+  },
 }

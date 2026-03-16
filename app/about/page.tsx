@@ -52,7 +52,7 @@ export default function AboutPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Next.js 14", icon: Code },
+            { label: "Next.js 16", icon: Code },
             { label: "TypeScript", icon: Code },
             { label: "Tailwind CSS", icon: Code },
             { label: "100% Open Source", icon: Github },

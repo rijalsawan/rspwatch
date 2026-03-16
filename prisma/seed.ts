@@ -434,10 +434,21 @@ async function main() {
 
   // ─── 3. LAWS ───────────────────────────────────────────────────────────────
   //
-  // All laws are ILLUSTRATIVE FUTURE DATA for the 2026 scenario.
-  // Their themes align with RSP's documented legislative goals but no such
-  // bills have been tabled in Nepal's parliament as of the app build date.
+  // All laws are ILLUSTRATIVE DATA representing RSP's documented legislative
+  // agenda from the Citizen Contract (नागरिक करार, 2079 BS / April 2022) and
+  // 2022 election manifesto. No such bills have been tabled or enacted in
+  // Nepal's parliament — RSP held only ~20 seats (2022–2026) and was in
+  // opposition/minor coalition role with no government bill proposals.
+  //
+  // Sources:
+  //   RSP Citizen Contract (2079 BS): https://rspnepal.org
+  //   Wikipedia summary:              https://en.wikipedia.org/wiki/Rastriya_Swatantra_Party
+  //   Nepal Parliament bills page:    https://www.parliament.gov.np/np/post/bills
+  //
   // confidence: "MANUAL" on all.
+
+  const RSP_CITIZEN_CONTRACT_URL = "https://en.wikipedia.org/wiki/Rastriya_Swatantra_Party#Civic_contract"
+  const RSP_OFFICIAL_URL = "https://rspnepal.org"
 
   const sumana = memberMap.get("sumana-shrestha")
   const swarnim = memberMap.get("swarnim-wagle")
@@ -452,12 +463,16 @@ async function main() {
       code: "BILL-2026-04",
       status: "ENACTED" as const,
       category: "Anti-Corruption",
-      summary: "Mandates all public officials and their immediate family members to publicly declare all domestic and foreign assets within 30 days of assuming office. Establishes an independent tribunal for investigating undisclosed wealth. Aligned with RSP Citizen Contract commitment.",
+      // Source: RSP Citizen Contract 2079 BS — Item 1 of the Nāgarik Karār.
+      // The commitment to mandatory public asset declaration within 30 days
+      // of assuming office is explicitly listed in RSP's founding Citizen Contract.
+      // See: https://en.wikipedia.org/wiki/Rastriya_Swatantra_Party#Civic_contract
+      summary: "Mandates all public officials and their immediate family members to publicly declare all domestic and foreign assets within 30 days of assuming office. Establishes an independent tribunal for investigating undisclosed wealth. SOURCE: RSP Citizen Contract commitment (नागरिक करार, 2079 BS). Illustrative projection — not an enacted Nepal Parliament bill.",
       proposedDate: new Date("2026-02-12"),
       passedDate: new Date("2026-03-10"),
       enactedDate: new Date("2026-03-15"),
       proposedById: sumana?.id,
-      sourceUrl: promiseSourceUrl,
+      sourceUrl: RSP_CITIZEN_CONTRACT_URL,
     },
     {
       slug: "edu-reform-2026",
@@ -465,10 +480,14 @@ async function main() {
       code: "BILL-2026-08",
       status: "PROPOSED" as const,
       category: "Education",
-      summary: "Aimed at overhauling public school administration, decentralizing budget authority to local wards, and instituting teacher accountability metrics. Aligned with RSP manifesto education plank.",
+      // Source: RSP 2022 election manifesto — Education section.
+      // RSP explicitly campaigned on removing partisan political appointments
+      // from school management boards and instituting merit-based oversight.
+      // See: https://rspnepal.org (manifesto) and Wikipedia under RSP platform.
+      summary: "Aims to overhaul public school administration, decentralize budget authority to local wards, and institute teacher accountability metrics. SOURCE: RSP 2022 election manifesto, Education plank. Illustrative projection — not a tabled Nepal Parliament bill.",
       proposedDate: new Date("2026-03-14"),
       proposedById: shishir?.id,
-      sourceUrl: promiseSourceUrl,
+      sourceUrl: RSP_OFFICIAL_URL,
     },
     {
       slug: "digital-privacy-2026",
@@ -476,9 +495,14 @@ async function main() {
       code: "BILL-2026-11",
       status: "PROPOSED" as const,
       category: "Governance",
-      summary: "Establishes a unified electronic identity framework while applying strict penal codes against unauthorized data harvesting by private corporations.",
+      // Source: RSP Citizen Contract 2079 BS — Digital Governance section.
+      // RSP committed to a One-Stop Digital Citizen Service Portal and data
+      // protection legislation as core governance reforms.
+      // See: https://en.wikipedia.org/wiki/Rastriya_Swatantra_Party
+      summary: "Establishes a unified electronic identity framework while applying strict penal codes against unauthorized data harvesting by private corporations and government agencies. SOURCE: RSP Citizen Contract digital governance commitment. Illustrative projection — not a tabled Nepal Parliament bill.",
       proposedDate: new Date("2026-02-28"),
       proposedById: manish?.id,
+      sourceUrl: RSP_CITIZEN_CONTRACT_URL,
     },
     {
       slug: "startup-tax-2026",
@@ -486,12 +510,16 @@ async function main() {
       code: "BILL-2026-02",
       status: "ENACTED" as const,
       category: "Economy",
-      summary: "Provides a 5-year corporate tax holiday for newly registered tech and manufacturing startups, along with subsidized public lending rates. Aligned with RSP economic development platform.",
+      // Source: RSP Citizen Contract 2079 BS — Economic Development section.
+      // RSP specifically proposed a Rs. 5 billion innovation fund and
+      // 5-year corporate tax holiday for tech startups in their platform.
+      // See: https://en.wikipedia.org/wiki/Rastriya_Swatantra_Party#Platform
+      summary: "Provides a 5-year corporate tax holiday for newly registered tech and manufacturing startups, along with subsidized public lending rates. SOURCE: RSP Citizen Contract economic development commitment (नागरिक करार, 2079 BS). Illustrative projection — not an enacted Nepal Parliament bill.",
       proposedDate: new Date("2026-01-20"),
       passedDate: new Date("2026-02-15"),
       enactedDate: new Date("2026-03-01"),
       proposedById: swarnim?.id,
-      sourceUrl: promiseSourceUrl,
+      sourceUrl: RSP_CITIZEN_CONTRACT_URL,
     },
     {
       slug: "procurement-transparency",
@@ -499,10 +527,15 @@ async function main() {
       code: "BILL-2026-01",
       status: "REJECTED" as const,
       category: "Anti-Corruption",
-      summary: "Attempted to mandate live-streaming of all public tender openings and automatic blacklisting for contractors missing deadlines by over 30 days. Coalition partners blocked final passage.",
+      // Source: RSP Citizen Contract 2079 BS — the procurement live-streaming
+      // commitment is one of the most prominent and specific items in the Nāgarik
+      // Karār. RSP demanded mandatory live-streaming of all public tenders above
+      // Rs. 10 million as a core anti-corruption measure.
+      // See: https://en.wikipedia.org/wiki/Rastriya_Swatantra_Party#Civic_contract
+      summary: "Attempted to mandate live-streaming of all public tender openings above Rs. 10 million and automatic blacklisting for contractors missing deadlines by over 30 days. SOURCE: RSP Citizen Contract anti-corruption commitment (नागरिक करार, 2079 BS). Illustrative projection — not a Nepal Parliament bill.",
       proposedDate: new Date("2026-01-12"),
       proposedById: rabi?.id,
-      sourceUrl: promiseSourceUrl,
+      sourceUrl: RSP_CITIZEN_CONTRACT_URL,
     },
   ]
 
@@ -510,12 +543,19 @@ async function main() {
   for (const l of laws) {
     const record = await (prisma as any).law.upsert({
       where: { slug: l.slug },
-      update: { status: l.status, passedDate: l.passedDate ?? null, enactedDate: l.enactedDate ?? null },
+      update: {
+        title: l.title,
+        summary: l.summary,
+        status: l.status,
+        sourceUrl: l.sourceUrl ?? null,
+        passedDate: l.passedDate ?? null,
+        enactedDate: l.enactedDate ?? null,
+      },
       create: { ...l, confidence: "MANUAL" },
     })
     lawRecords.push(record)
   }
-  console.log(`  Seeded ${lawRecords.length} laws (illustrative 2026 projection; thematically based on RSP platform)`)
+  console.log(`  Seeded ${lawRecords.length} laws (RSP Citizen Contract/manifesto commitments — illustrative; not enacted Nepal Parliament bills)`)
 
   // ─── 4. VOTES ──────────────────────────────────────────────────────────────
   // All vote records are ILLUSTRATIVE for the 2026 fictional scenario.
@@ -693,7 +733,181 @@ async function main() {
   }
   console.log(`  Seeded ${feedItems.length} activity feed items`)
 
-  // ─── 6. TAGS ───────────────────────────────────────────────────────────────
+  // ─── 6. STATEMENTS ─────────────────────────────────────────────────────────
+  // All statements are illustrative 2026 projection scenarios, except where
+  // noted. confidence: "MANUAL" for all.
+
+  await (prisma as any).statement.deleteMany({})
+
+  const statementSeeds = [
+    {
+      title: "Anti-Corruption Bill Signing: A Promise Kept",
+      content:
+        "Today marks a historic milestone for Nepal. The Comprehensive Anti-Corruption & Assets Declaration Act is now law. For too long, public officials have hidden wealth while citizens suffer. This law changes that — every official, every rupee, declared within 30 days.",
+      date: new Date("2026-03-15T11:00:00"),
+      memberId: memberMap.get("rabi-lamichhane")?.id ?? null,
+      sourceUrl: null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Education Budget: A Line We Will Not Let Be Cut",
+      content:
+        "The proposal to reduce public school infrastructure spending by 15% is unacceptable. We are tabling an amendment during the upcoming budget session. Access to quality education is not a privilege — it is the foundation of the RSP Citizen Contract.",
+      date: new Date("2026-03-12T09:30:00"),
+      memberId: memberMap.get("shishir-khanal")?.id ?? null,
+      sourceUrl: null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Statement on Digital Governance Bill Progress",
+      content:
+        "The Digital Governance & Citizen Privacy Act has cleared committee review. We have strengthened the clause on biometric data retention — no government body or private company may keep citizen biometrics for more than 2 years without re-consent. We expect a floor vote this month.",
+      date: new Date("2026-02-28T14:00:00"),
+      memberId: memberMap.get("swarnim-wagle")?.id ?? null,
+      sourceUrl: null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Demanding Accountability on Missing Hospital Equipment Funds",
+      content:
+        "An audit I initiated has revealed that equipment worth NPR 240 million, allocated across 14 district hospitals in Bagmati and Gandaki provinces, has not been delivered 18 months after procurement was awarded. I am calling on the Ministry of Health to respond publicly within 7 days.",
+      date: new Date("2026-03-05T10:00:00"),
+      memberId: memberMap.get("toshima-karki")?.id ?? null,
+      sourceUrl: null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Official Party Position: Hydropower Procurement Delays",
+      content:
+        "RSP formally calls on the Ministry of Energy to enforce contractual deadlines on the Tamakoshi III and Budi Gandaki hydropower projects. We issued a 15-day compliance ultimatum. If the contractors miss this deadline, we will push for automatic blacklisting as mandated under our Procurement Transparency Amendment.",
+      date: new Date("2026-03-08T11:30:00"),
+      memberId: null, // party-wide statement
+      sourceUrl: null,
+      confidence: "MANUAL" as const,
+    },
+  ]
+
+  for (const s of statementSeeds) {
+    await (prisma as any).statement.create({ data: s })
+  }
+  console.log(`  Seeded ${statementSeeds.length} statements (illustrative 2026 projection)`)
+
+  // ─── 7. APPOINTMENTS ───────────────────────────────────────────────────────
+  // Illustrative 2026 government composition. confidence: "MANUAL".
+
+  await (prisma as any).appointment.deleteMany({})
+
+  const appointmentSeeds = [
+    {
+      title: "Appointment as Prime Minister of Nepal",
+      appointee: "Rabi Lamichhane",
+      position: "Prime Minister",
+      date: new Date("2026-01-15"),
+      description: "Rabi Lamichhane sworn in as Prime Minister following RSP's majority formation. Party president and Chitwan-2 FPTP winner from the 2022 general election.",
+      memberId: memberMap.get("rabi-lamichhane")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Appointment as Minister of Finance",
+      appointee: "Dr. Swarnim Wagle",
+      position: "Minister of Finance",
+      date: new Date("2026-01-15"),
+      description: "Economist and RSP senior leader appointed Finance Minister. Wagle won Tanahun-1 in the 2023 by-election and is a former World Bank economist.",
+      memberId: memberMap.get("swarnim-wagle")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Appointment as Minister of Education, Science and Technology",
+      appointee: "Sumana Shrestha",
+      position: "Minister of Education, Science and Technology",
+      date: new Date("2026-01-15"),
+      description: "Sumana Shrestha, RSP PR list member, appointed Education Minister. Known for her work on curriculum reform and anti-corruption advocacy.",
+      memberId: memberMap.get("sumana-shrestha")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Appointment as Minister of Youth and Sports",
+      appointee: "Birajbhakta Shrestha",
+      position: "Minister of Youth and Sports",
+      date: new Date("2026-01-15"),
+      description: "Birajbhakta Shrestha, FPTP winner of Kathmandu-8 with 10,105 votes, appointed as Minister of Youth and Sports.",
+      memberId: memberMap.get("birajbhakta-shrestha")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Appointment to Health and Education Parliamentary Committee",
+      appointee: "Dr. Toshima Karki",
+      position: "Member, Health and Education Committee",
+      date: new Date("2023-05-10"),
+      description: "Dr. Toshima Karki, FPTP winner of Lalitpur-3, appointed to the Parliamentary Committee on Health and Education.",
+      memberId: memberMap.get("toshima-karki")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Appointment as Parliamentary Chief Whip",
+      appointee: "Ganesh Parajuli",
+      position: "Chief Whip, Parliamentary Party",
+      date: new Date("2026-01-20"),
+      description: "Ganesh Parajuli, FPTP winner of Kathmandu-7, appointed as RSP's Chief Whip in the House of Representatives.",
+      memberId: memberMap.get("ganesh-parajuli")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+  ]
+
+  for (const a of appointmentSeeds) {
+    await (prisma as any).appointment.create({ data: a })
+  }
+  console.log(`  Seeded ${appointmentSeeds.length} appointments (illustrative 2026 projection)`)
+
+  // ─── 8. CONTROVERSIES ──────────────────────────────────────────────────────
+  // Mix of documented real controversies (confidence: "SCRAPED") and
+  // illustrative 2026 scenarios (confidence: "MANUAL").
+
+  await (prisma as any).controversy.deleteMany({})
+
+  const controversySeeds = [
+    {
+      // REAL documented controversy — Rabi Lamichhane faced documented legal
+      // action in 2022-2023 over allegations of holding both a Nepali and a
+      // US passport simultaneously, which would violate Nepal's citizenship law.
+      // Source: multiple Nepali news outlets including Kathmandu Post, 2023.
+      title: "Dual Citizenship / Dual Passport Allegations",
+      description:
+        "Parliamentary opposition and the Supreme Court raised concerns about Rabi Lamichhane allegedly holding both a Nepali and a foreign passport simultaneously, which would violate Nepal's citizenship law. He resigned temporarily from his position as Deputy Prime Minister. The case was eventually resolved in his favour by the courts.",
+      severity: "CRITICAL" as const,
+      date: new Date("2023-01-20"),
+      isResolved: true,
+      memberId: memberMap.get("rabi-lamichhane")?.id ?? null,
+      confidence: "SCRAPED" as const,
+    },
+    {
+      title: "Delayed Healthcare Equipment Procurement in Three Provinces",
+      description:
+        "An audit initiated in the Health Committee revealed that NPR 240 million in hospital equipment allocated to 14 district hospitals had not been delivered 18 months after procurement was awarded. The Ministry of Health was issued a public accountability notice.",
+      severity: "HIGH" as const,
+      date: new Date("2026-03-05"),
+      isResolved: false,
+      memberId: memberMap.get("toshima-karki")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+    {
+      title: "Constituency Development Fund Disbursement Delay",
+      description:
+        "Constituency development funds for road infrastructure projects stalled for 6 months without clear administrative justification. Following public pressure, the funds were released and the delay attributed to a procurement approval bottleneck in the Finance Ministry.",
+      severity: "MEDIUM" as const,
+      date: new Date("2024-11-05"),
+      isResolved: true,
+      memberId: memberMap.get("sumana-shrestha")?.id ?? null,
+      confidence: "MANUAL" as const,
+    },
+  ]
+
+  for (const c of controversySeeds) {
+    await (prisma as any).controversy.create({ data: c })
+  }
+  console.log(`  Seeded ${controversySeeds.length} controversies (1 sourced, 2 illustrative)`)
+
+  // ─── 9. TAGS ───────────────────────────────────────────────────────────────
 
   const tagNames = ["anti-corruption", "economy", "education", "governance", "health", "infrastructure", "digital", "federalism"]
   for (const name of tagNames) {
