@@ -1,7 +1,7 @@
 {
-  "name": "RSP Watch",
-  "short_name": "RSP Watch",
-  "description": "Track Rastriya Swatantra Party's parliamentary record: laws filed, promises kept, votes cast, and MP performance.",
+  "name": "Parliament Watch",
+  "short_name": "Parliament Watch",
+  "description": "Track political parties' parliamentary records: laws filed, promises kept, votes cast, and MP performance — all of Nepal's Parliament, transparently.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -28,7 +28,7 @@
       "src": "/opengraph-image",
       "sizes": "1200x630",
       "type": "image/png",
-      "label": "RSP Watch — Parliamentary Accountability Tracker"
+      "label": "Parliament Watch — Nepal's Parliamentary Accountability Tracker"
     }
   ],
   "related_applications": [],

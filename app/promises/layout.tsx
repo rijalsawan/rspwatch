@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Promise Tracker",
   description:
-    "Is RSP keeping its promises? Track the status of every Citizen Contract pledge — kept, in progress, broken, or not started.",
+    "Track the status of all political party election promises — kept, in progress, broken, or not started.",
   openGraph: {
-    title: "RSP Promise Tracker | RSP Watch",
+    title: "Promise Tracker | Parliament Watch",
     description:
-      "Track the status of every RSP Citizen Contract pledge — kept, in progress, broken, or not started.",
+      "Track the status of all political party election promises — kept, in progress, broken, or not started.",
   },
 }
 

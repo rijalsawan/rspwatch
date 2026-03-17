@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Laws & Bills",
   description:
-    "Browse bills proposed, passed, and enacted by Rastriya Swatantra Party MPs in Nepal's federal parliament. Filter by status, category, and sponsor.",
+    "Browse bills proposed, passed, and enacted in Nepal's federal parliament. Filter by status, category, and sponsor.",
   openGraph: {
-    title: "Laws & Bills | RSP Watch",
+    title: "Laws & Bills | Parliament Watch",
     description:
-      "Browse bills proposed, passed, and enacted by Rastriya Swatantra Party MPs in Nepal's federal parliament.",
+      "Browse bills proposed, passed, and enacted in Nepal's federal parliament.",
   },
 }
 

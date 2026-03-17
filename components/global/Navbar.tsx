@@ -4,15 +4,18 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Bell, Menu, X, Moon, Sun, Search, ChevronDown,
+  Menu, X, Moon, Sun, Search, ChevronDown,
   LayoutDashboard, Newspaper, Eye, BookOpen, Calendar,
   Users, Scale, ClipboardList, Vote, BarChart2,
   Clock, MessageSquare, CalendarCheck, AlertTriangle,
+  UserCircle2, LogOut,
 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { useTheme } from "next-themes"
+import { useSession, signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { useSearch } from "./SearchModal"
+import { useAuthModal } from "./AuthModal"
 
 const PRIMARY_LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +33,7 @@ const TRACKING_LINKS = [
 ]
 
 const MORE_LINKS = [
+  { href: "/discussions", label: "Discussions", icon: MessageSquare },
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
   { href: "/timeline", label: "Timeline", icon: Clock },
   { href: "/statements", label: "Statements", icon: MessageSquare },
@@ -50,6 +54,8 @@ export function Navbar() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const { openSearch } = useSearch()
+  const { openAuthModal } = useAuthModal()
+  const { data: session } = useSession()
   const moreRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -113,8 +119,7 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-1 shrink-0"
         >
-          <Bell className="w-5 h-5 text-primary group-hover:rotate-12 transition-transform" />
-          <span className="font-display font-bold text-lg tracking-tight">RSP Watch</span>
+          <span className="font-display font-bold text-lg tracking-tight">Parliament Watch</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -293,6 +298,33 @@ export function Navbar() {
             </button>
           )}
 
+          {/* Desktop auth */}
+          {mounted && (
+            session ? (
+              <div className="hidden md:flex items-center gap-1">
+                <span className="text-xs text-muted-foreground px-2 max-w-[96px] truncate">
+                  {session.user?.name}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="p-2 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={openAuthModal}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <UserCircle2 className="w-4 h-4" />
+                Sign In
+              </button>
+            )
+          )}
+
           {/* Mobile menu toggle */}
           <button
             onClick={() => setIsMobileMenuOpen((v) => !v)}
@@ -324,8 +356,7 @@ export function Navbar() {
                   className="flex items-center gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-1"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <Bell className="w-5 h-5 text-primary" />
-                  <span className="font-display font-bold text-lg tracking-tight">RSP Watch</span>
+                  <span className="font-display font-bold text-lg tracking-tight">Parliament Watch</span>
                 </Link>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}

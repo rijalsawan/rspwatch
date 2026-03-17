@@ -20,7 +20,7 @@ async function main() {
   const arg = process.argv[2] || "all"
 
   console.log("═".repeat(60))
-  console.log("  RSP Watch — Scraper Runner")
+  console.log("  Parliament Watch — Scraper Runner")
   console.log("═".repeat(60))
   console.log()
 

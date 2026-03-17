@@ -9,7 +9,7 @@ import type { StatusType } from "@/components/shared/StatusBadge"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
 import { GlitchNumber } from "@/components/animations/GlitchNumber"
-import { ArrowRight, BookOpen, CheckCircle2, Users, FileText, Calendar } from "lucide-react"
+import { ArrowRight, BookOpen, CheckCircle2, Users, FileText, Calendar, MessageCircle } from "lucide-react"
 import Link from "next/link"
 
 interface StatsData {
@@ -145,8 +145,7 @@ export default function Home() {
           Holding Power Accountable Through Data.
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-          Public, un-editorialized tracking of the Rastriya Swatantra Party's
-          governance, promises, legislative actions, and parliamentary votes.
+          Public, un-editorialized tracking of all political parties in the Nepali Parliament: governance, promises, legislative actions, and voting records.
         </p>
       </section>
 
@@ -354,8 +353,10 @@ export default function Home() {
           {/* This Week in Parliament */}
           <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Calendar className="w-[18px] h-[18px] text-primary" />
+                </div>
                 <h3 className="font-display font-bold text-lg">This Week</h3>
               </div>
             </div>
@@ -446,16 +447,19 @@ export default function Home() {
               { label: "Party MPs", icon: Users, href: "/members", count: `${statsData?.activeMps ?? 0} Members` },
               { label: "Floor Votes", icon: CheckCircle2, href: "/votes", count: `${statsData?.totalVotes ?? 0} Sessions` },
               { label: "Statements", icon: FileText, href: "/timeline", count: "Full Timeline" },
+              { label: "Discussions", icon: MessageCircle, href: "/discussions", count: "Join Debate" },
             ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col gap-2 p-4 rounded-md border border-border bg-card hover:border-primary/50 hover:bg-secondary/50 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex flex-col gap-3 p-4 rounded-md border border-border bg-card hover:border-primary/40 hover:shadow-sm transition-all group outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <item.icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex items-center justify-center">
+                  <item.icon className="w-[18px] h-[18px] text-primary" />
+                </div>
                 <div>
-                  <div className="font-semibold text-sm group-hover:text-primary transition-colors">{item.label}</div>
-                  <div className="text-xs text-muted-foreground">{item.count}</div>
+                  <div className="font-semibold text-sm group-hover:text-primary transition-colors leading-tight">{item.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{item.count}</div>
                 </div>
               </Link>
             ))}

@@ -1,6 +1,5 @@
 import Link from "next/link"
 import {
-  Bell,
   Scale,
   Users,
   FileText,
@@ -11,7 +10,6 @@ import {
   ExternalLink,
   Github,
   Mail,
-  ArrowUpRight,
 } from "lucide-react"
 
 const ACCOUNTABILITY_LINKS = [
@@ -51,7 +49,7 @@ export function Footer() {
               Help keep democracy accountable
             </h3>
             <p className="text-sm text-muted-foreground">
-              RSP Watch is an open-source, community-driven project. Spot
+              Parliament Watch is an open-source, community-driven project. Spot
               inaccurate data? Have a suggestion? Contribute to the project.
             </p>
           </div>
@@ -63,6 +61,15 @@ export function Footer() {
               <Mail className="w-4 h-4" />
               Get Involved
             </Link>
+            <a
+              href="https://github.com/rijalsawan/rspwatch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-border bg-background font-medium text-sm hover:bg-secondary/60 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Github className="w-4 h-4" />
+              GitHub
+            </a>
             <Link
               href="/transparency"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-border bg-background font-medium text-sm hover:bg-secondary/60 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -83,16 +90,13 @@ export function Footer() {
               href="/"
               className="flex items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md w-fit"
             >
-              <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                <Bell className="w-4.5 h-4.5 text-primary" />
-              </div>
               <span className="font-display font-bold text-xl tracking-tight">
-                RSP <span className="text-muted-foreground font-normal">Watch</span>
+                Parliament <span className="text-muted-foreground font-normal">Watch</span>
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               An independent, non-partisan public accountability tracker for
-              Nepal&apos;s Rastriya Swatantra Party. Monitoring promises, votes,
+              Nepal&apos;s Parliament and political parties. Monitoring promises, votes,
               and governance in real time.
             </p>
             <div className="flex items-center gap-1 mt-1">
@@ -176,11 +180,11 @@ export function Footer() {
                 <Github className="w-4 h-4" />
               </a>
               <a
-                href="https://rspnepal.org"
+                href="https://parliament.gov.np"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-md border border-border bg-background hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="RSP Official"
+                aria-label="Nepal Parliament"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
@@ -193,19 +197,10 @@ export function Footer() {
       <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground">
           <p>
-            &copy; {year} RSP Watch Project. Open-source civic data.
+            &copy; {year} Parliament Watch. Open-source civic data.
           </p>
           <div className="flex items-center gap-1.5">
-            <span>Not affiliated with</span>
-            <a
-              href="https://rspnepal.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-foreground hover:text-primary transition-colors"
-            >
-              Rastriya Swatantra Party
-              <ArrowUpRight className="w-3 h-3" />
-            </a>
+            <span>Not affiliated with any political party.</span>
           </div>
         </div>
       </div>

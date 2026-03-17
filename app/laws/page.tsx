@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { useCachedFetch } from "@/hooks/use-cached-fetch"
+import { useState, useMemo, useEffect } from "react"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileText, ArrowRight, Search, Users, Calendar, Tag, BadgeCheck } from "lucide-react"
+import { FileText, ArrowRight, Search, Users, Calendar, Tag, BadgeCheck, Loader2 } from "lucide-react"
 import Link from "next/link"
+
+const PAGE_SIZE = 50
 
 interface LawData {
   id: string
@@ -47,29 +48,70 @@ export default function LawsPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
 
-  // Construct the API URL based on current filters
-  const apiUrl = useMemo(() => {
-    const params = new URLSearchParams({ limit: "50" })
+  const [allLaws, setAllLaws] = useState<LawData[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  // Fetch initial page when filters change
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setAllLaws([])
+    setPage(1)
+    setHasMore(false)
+
+    const params = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      page: "1",
+    })
     if (statusFilter) params.set("status", statusFilter)
     if (categoryFilter) params.set("category", categoryFilter)
-    return `/api/laws?${params}`
+
+    fetch(`/api/laws?${params}`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (cancelled) return
+        setAllLaws(res.data ?? [])
+        setHasMore(res.meta?.hasMore ?? false)
+      })
+      .catch(() => { if (!cancelled) setAllLaws([]) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+
+    return () => { cancelled = true }
   }, [statusFilter, categoryFilter])
 
-  // Use cached fetch with constructed URL
-  const { data: lawsResponse, loading } = useCachedFetch<{data: LawData[], meta?: {total: number}}>(apiUrl)
+  const loadMore = async () => {
+    setLoadingMore(true)
+    const nextPage = page + 1
+    try {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        page: String(nextPage),
+      })
+      if (statusFilter) params.set("status", statusFilter)
+      if (categoryFilter) params.set("category", categoryFilter)
 
-  // Extract data from response
-  const laws = lawsResponse?.data ?? []
-  const total = lawsResponse?.meta?.total ?? laws.length
+      const res = await fetch(`/api/laws?${params}`)
+      const data = await res.json()
+      setAllLaws((prev) => [...prev, ...(data.data ?? [])])
+      setHasMore(data.meta?.hasMore ?? false)
+      setPage(nextPage)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
+  // Client-side search filter on the already-loaded set
   const filtered = search
-    ? laws.filter(l => 
-        l.title.toLowerCase().includes(search.toLowerCase()) || 
-        (l.titleNepali && l.titleNepali.includes(search)) || 
+    ? allLaws.filter((l) =>
+        l.title.toLowerCase().includes(search.toLowerCase()) ||
+        (l.titleNepali && l.titleNepali.includes(search)) ||
         (l.code && l.code.toLowerCase().includes(search.toLowerCase())) ||
         l.category.toLowerCase().includes(search.toLowerCase())
       )
-    : laws
+    : allLaws
 
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-8 w-full">
@@ -79,7 +121,7 @@ export default function LawsPage() {
           Laws & Bills
         </h1>
         <p className="text-lg text-muted-foreground leading-relaxed">
-          Track every piece of legislation proposed, debated, or voted on by RSP lawmakers. Monitor their commitments to the Citizen Contract in real-time, including official texts and committee statuses.
+          Track every piece of legislation proposed, debated, or voted on by Nepali parliamentarians. Monitor parliamentary commitments in real-time, including official texts, committee statuses, and debate records.
         </p>
       </div>
 
@@ -243,6 +285,24 @@ export default function LawsPage() {
               </Button>
             )}
           </div>
+        )}
+
+        {/* Load More Button */}
+        {hasMore && (
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="w-full py-3 px-4 font-semibold text-sm text-foreground bg-muted/50 hover:bg-muted border border-border rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loadingMore ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              "Load More Bills"
+            )}
+          </button>
         )}
       </div>
     </PageTransition>

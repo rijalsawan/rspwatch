@@ -1,4 +1,4 @@
-// RSP Watch — Full Database Schema
+// Parliament Watch — Full Database Schema
 // All text fields support Unicode (Devanagari/Nepali) via PostgreSQL's default UTF-8 encoding.
 
 generator client {
@@ -143,6 +143,7 @@ model Law {
   proposedBy    Member?        @relation(fields: [proposedById], references: [id])
   votes         Vote[]
   tags          Tag[]
+  comments      Comment[]
 
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -205,6 +206,7 @@ model Promise {
   confidence  DataConfidence @default(MANUAL)
 
   tags        Tag[]
+  comments    Comment[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -254,6 +256,7 @@ model Appointment {
 /// Flagged controversies or issues
 model Controversy {
   id          String         @id @default(cuid())
+  slug        String?        @unique
   title       String
   description String
   severity    SeverityLevel
@@ -264,6 +267,7 @@ model Controversy {
 
   memberId    String?
   member      Member?        @relation(fields: [memberId], references: [id])
+  comments    Comment[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -340,4 +344,126 @@ model Party {
   updatedAt    DateTime @updatedAt
 
   @@index([abbreviation])
+}
+// --- User, Auth & Interaction Models (Phase 2 & 3) -----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  comments      Comment[]
+  pollVotes     PollVote[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// Generic Comment model that can be attached to various entities
+model Comment {
+  id            String   @id @default(cuid())
+  content       String   @db.Text
+  isArchived    Boolean  @default(false)
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Single-level reply support
+  parentId      String?
+  parent        Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[] @relation("CommentReplies")
+
+  // Optional foreign keys mapping to entities (Polymorphic-ish, strictly typed)
+  lawId         String?
+  law           Law?           @relation(fields: [lawId], references: [id], onDelete: Cascade)
+
+  controversyId String?
+  controversy   Controversy?   @relation(fields: [controversyId], references: [id], onDelete: Cascade)
+
+  promiseId     String?
+  promise       Promise?       @relation(fields: [promiseId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([lawId])
+  @@index([controversyId])
+  @@index([promiseId])
+  @@index([parentId])
+}
+
+/// A poll tied to a specific entity (e.g. Law or Controversy)
+model Poll {
+  id            String   @id @default(cuid())
+  question      String
+  entityId      String   @unique // Foreign ID of Law, Controversy, etc.
+  entityType    ActivityType
+
+  options       PollOption[]
+  votes         PollVote[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([entityId])
+}
+
+model PollOption {
+  id        String   @id @default(cuid())
+  label     String   // e.g. "Support", "Oppose", "Neutral"
+  pollId    String
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     PollVote[]
+}
+
+model PollVote {
+  id           String     @id @default(cuid())
+  pollId       String
+  poll         Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId     String
+  option       PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+
+  // A user can only vote once per poll
+  @@unique([pollId, userId])
 }

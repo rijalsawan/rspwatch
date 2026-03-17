@@ -70,7 +70,7 @@ const TYPE_CONFIG: Record<
 }
 
 const QUICK_LINKS = [
-  { label: "MPs & Members", href: "/members", icon: Users, desc: "Browse all RSP members" },
+  { label: "MPs & Members", href: "/members", icon: Users, desc: "Browse all parliamentary members" },
   { label: "Laws & Bills", href: "/laws", icon: BookOpen, desc: "Track legislation" },
   { label: "Promises", href: "/promises", icon: CheckCircle2, desc: "Citizen contract" },
   { label: "Votes", href: "/votes", icon: TrendingUp, desc: "Parliamentary votes" },
@@ -138,7 +138,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
             type: "member" as const,
             id: m.slug,
             title: m.name,
-            subtitle: [m.role, m.constituency].filter(Boolean).join(" · ") || "RSP Member",
+            subtitle: [m.role, m.constituency].filter(Boolean).join(" · ") || "Parliamentary Member",
             href: `/members/${m.slug}`,
           })),
           ...laws.slice(0, 3).map((l) => ({

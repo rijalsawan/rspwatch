@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next"
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rspwatch.np"
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://parliamentwatch.np"
 
   return {
     rules: [

@@ -2,10 +2,10 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Appointments & Cabinet",
-  description: "Track RSP members serving in Nepal's cabinet, parliamentary committees, and key structural government roles.",
+  description: "Track parliamentary members serving in Nepal's cabinet, parliamentary committees, and key structural government roles.",
   openGraph: {
-    title: "Appointments & Cabinet | RSP Watch",
-    description: "Track RSP members in Nepal's cabinet, parliamentary committees, and government roles.",
+    title: "Appointments & Cabinet | Parliament Watch",
+    description: "Track members in Nepal's cabinet, parliamentary committees, and government roles.",
   },
 }
 

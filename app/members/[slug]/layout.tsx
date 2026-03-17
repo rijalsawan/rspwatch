@@ -11,7 +11,7 @@ type Props = {
 async function getMember(slug: string) {
   return prisma.member.findUnique({
     where: { slug },
-    select: { name: true, nameNepali: true, photoUrl: true, constituency: true, province: true, role: true },
+    select: { name: true, nameNepali: true, photoUrl: true, constituency: true, province: true, role: true, party: { select: { name: true } } },
   })
 }
 
@@ -22,13 +22,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!member) notFound()
 
   const title = member.nameNepali ? `${member.name} (${member.nameNepali})` : member.name
-  const description = `${member.name} — RSP ${member.role} representing ${member.constituency}, ${member.province}. View attendance, voting record, sponsored bills, and statements.`
+  const description = `${member.name} — Parliamentary member representing ${member.constituency}, ${member.province}. View attendance, voting record, sponsored bills, and statements.`
 
   return {
     title,
     description,
     openGraph: {
-      title: `${title} | RSP Watch`,
+      title: `${title} | Parliament Watch`,
       description,
       ...(member.photoUrl && {
         images: [{ url: member.photoUrl, alt: member.name }],
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rspwatch.np"
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://parliamentwatch.np"
 
 export default async function MemberDetailLayout({ params, children }: Props) {
   const { slug } = await params
@@ -52,10 +52,12 @@ export default async function MemberDetailLayout({ params, children }: Props) {
     ...(member.nameNepali && { alternateName: member.nameNepali }),
     ...(member.photoUrl && { image: member.photoUrl }),
     jobTitle: member.role,
-    worksFor: {
-      "@type": "Organization",
-      name: "Rastriya Swatantra Party",
-    },
+    ...(member.party && {
+      worksFor: {
+        "@type": "Organization",
+        name: member.party.name,
+      },
+    }),
     memberOf: {
       "@type": "Organization",
       name: "Federal Parliament of Nepal",

@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Events & Gatherings",
   description:
-    "Official RSP party events, rallies, and meetings — synced live from rspnepal.org.",
+    "Official political party events, rallies, and meetings.",
   openGraph: {
-    title: "Events & Gatherings | RSP Watch",
+    title: "Events & Gatherings | Parliament Watch",
     description:
-      "Official RSP party events, rallies, and meetings — synced live from rspnepal.org.",
+      "Official political party events, rallies, and meetings.",
   },
 }
 

@@ -345,7 +345,7 @@ function SearchPageContent() {
       {/* Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
-          {hasQuery ? `Results for "${debouncedInput}"` : "Search RSP Watch"}
+          {hasQuery ? `Results for "${debouncedInput}"` : "Search Parliament Watch"}
         </h1>
         <p className="text-muted-foreground text-sm">
           {hasQuery && isReady

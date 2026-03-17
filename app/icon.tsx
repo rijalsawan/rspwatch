@@ -11,78 +11,48 @@ export default function Icon() {
         style={{
           width: 32,
           height: 32,
-          background: "#080d1a",
-          borderRadius: 9,
+          background: "white",
+          borderRadius: 6,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          boxShadow: "inset 0 0 0 1.5px rgba(96,165,250,0.35)",
+          border: "2px solid black",
         }}
       >
-        {/* Bell shape */}
+        {/* Gavel/Hammer - Parliamentary symbol */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            justifyContent: "center",
             position: "absolute",
-            top: 6,
+            width: 20,
+            height: 20,
           }}
         >
-          {/* Handle */}
+          {/* Hammer head (horizontal bar) */}
           <div
             style={{
-              width: 4,
-              height: 3,
-              background: "#93c5fd",
-              borderRadius: "3px 3px 0 0",
+              width: 16,
+              height: 4,
+              background: "black",
+              borderRadius: 2,
+              marginBottom: 2,
             }}
           />
-          {/* Dome */}
+
+          {/* Hammer handle (vertical line) */}
           <div
             style={{
-              width: 14,
-              height: 9,
-              background: "linear-gradient(170deg, #93c5fd 0%, #3b82f6 100%)",
-              borderRadius: "8px 8px 0 0",
-            }}
-          />
-          {/* Rim */}
-          <div
-            style={{
-              width: 17,
-              height: 3,
-              background: "#3b82f6",
-              borderRadius: "1px 1px 0 0",
-            }}
-          />
-          {/* Clapper */}
-          <div
-            style={{
-              width: 5,
-              height: 3,
-              background: "#60a5fa",
-              borderRadius: "0 0 4px 4px",
-              marginTop: 1,
+              width: 2,
+              height: 10,
+              background: "black",
+              borderRadius: 1,
             }}
           />
         </div>
-
-        {/* Red notification badge */}
-        <div
-          style={{
-            position: "absolute",
-            top: 4,
-            right: 4,
-            width: 8,
-            height: 8,
-            background: "#ef4444",
-            borderRadius: "50%",
-            border: "1.5px solid #080d1a",
-            display: "flex",
-          }}
-        />
       </div>
     ),
     { ...size }

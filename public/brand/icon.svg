@@ -1,82 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <defs>
-    <!-- Background -->
-    <radialGradient id="bg" cx="40%" cy="30%" r="70%">
-      <stop offset="0%" stop-color="#0d1a36"/>
-      <stop offset="100%" stop-color="#060a14"/>
-    </radialGradient>
+  <!-- Parliament/Government themed minimalist black & white favicon -->
+  <!-- Represents judicial decisions, parliamentary authority, and accountability -->
 
-    <!-- Bell fill gradient -->
-    <linearGradient id="bell" x1="0%" y1="0%" x2="30%" y2="100%">
-      <stop offset="0%" stop-color="#bfdbfe"/>
-      <stop offset="45%" stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
+  <!-- White background -->
+  <rect width="512" height="512" fill="white"/>
 
-    <!-- Glow filter -->
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="12" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+  <!-- Outer circle border -->
+  <circle cx="256" cy="256" r="240" fill="none" stroke="black" stroke-width="20"/>
 
-    <!-- Badge glow -->
-    <filter id="badgeGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+  <!-- Gavel/Hammer - symbol of parliamentary decisions and justice -->
+  <g transform="translate(256, 256)">
+    <!-- Hammer head (horizontal bar) -->
+    <rect x="-70" y="-60" width="140" height="50" rx="8" fill="black"/>
 
-    <clipPath id="circle">
-      <circle cx="256" cy="256" r="256"/>
-    </clipPath>
-  </defs>
+    <!-- Hammer handle (vertical line) -->
+    <line x1="0" y1="-10" x2="0" y2="90" stroke="black" stroke-width="20" stroke-linecap="round"/>
 
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
-
-  <!-- Subtle grid pattern -->
-  <g clip-path="url(#circle)" opacity="0.04">
-    <line x1="0" y1="128" x2="512" y2="128" stroke="#3b82f6" stroke-width="1"/>
-    <line x1="0" y1="256" x2="512" y2="256" stroke="#3b82f6" stroke-width="1"/>
-    <line x1="0" y1="384" x2="512" y2="384" stroke="#3b82f6" stroke-width="1"/>
-    <line x1="128" y1="0" x2="128" y2="512" stroke="#3b82f6" stroke-width="1"/>
-    <line x1="256" y1="0" x2="256" y2="512" stroke="#3b82f6" stroke-width="1"/>
-    <line x1="384" y1="0" x2="384" y2="512" stroke="#3b82f6" stroke-width="1"/>
-  </g>
-
-  <!-- Outer ring -->
-  <circle cx="256" cy="256" r="248" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.2"/>
-
-  <!-- Inner glow ring -->
-  <circle cx="256" cy="256" r="192" fill="none" stroke="#3b82f6" stroke-width="64" opacity="0.05"/>
-
-  <!-- Bell icon (Lucide bell path, scaled 12.5x, centered) -->
-  <g transform="translate(106, 100) scale(12.5)" filter="url(#glow)">
-    <!-- Bell body + dome -->
-    <path
-      d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
-      fill="url(#bell)"
-    />
-    <!-- Clapper -->
-    <path
-      d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
-      stroke="url(#bell)"
-      stroke-width="2"
-      stroke-linecap="round"
-      fill="none"
-    />
-    <!-- Handle line at top -->
-    <line x1="12" y1="2" x2="12" y2="4" stroke="#bfdbfe" stroke-width="2" stroke-linecap="round"/>
-  </g>
-
-  <!-- Notification badge (red dot) -->
-  <g filter="url(#badgeGlow)">
-    <circle cx="345" cy="126" r="36" fill="#ef4444"/>
-    <circle cx="345" cy="126" r="36" fill="none" stroke="#060a14" stroke-width="8"/>
+    <!-- Sound wave lines representing voice/debate in parliament -->
+    <path d="M -110 0 Q -110 40 -85 40" stroke="black" stroke-width="12" stroke-linecap="round" fill="none"/>
+    <path d="M 110 0 Q 110 40 85 40" stroke="black" stroke-width="12" stroke-linecap="round" fill="none"/>
   </g>
 </svg>

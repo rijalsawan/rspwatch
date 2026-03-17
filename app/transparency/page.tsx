@@ -222,7 +222,7 @@ export default function TransparencyPage() {
           Transparency & Data Sources
         </h1>
         <p className="text-lg text-muted-foreground">
-          RSP Watch is committed to radical transparency. This page shows exactly where our data
+          Parliament Watch is committed to radical transparency. This page shows exactly where our data
           comes from, how it's integrated, and the full audit trail of our data collection.
         </p>
       </div>

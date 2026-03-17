@@ -15,12 +15,12 @@ export async function generateMetadata({
   if (!vote) return { title: "Vote Not Found" }
 
   const title = vote.description ?? `Parliamentary Vote — ${vote.type.replace("_", " ")}`
-  const description = `${vote.outcome} — ${vote.type.replace("_", " ")} on ${new Date(vote.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Full RSP roll-call breakdown on RSP Watch.`
+  const description = `${vote.outcome} — ${vote.type.replace("_", " ")} on ${new Date(vote.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Full parliamentary roll-call breakdown on Parliament Watch.`
 
   return {
     title,
     description,
-    openGraph: { title: `${title} | RSP Watch`, description },
+    openGraph: { title: `${title} | Parliament Watch`, description },
   }
 }
 

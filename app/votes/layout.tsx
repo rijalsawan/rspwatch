@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Parliamentary Votes",
   description:
-    "See how RSP MPs voted on every bill — yea, nay, abstain, or absent. Track party-line votes and defections.",
+    "See how Nepal's MPs voted on every bill — yea, nay, abstain, or absent. Track party-line votes and defections.",
   openGraph: {
-    title: "Parliamentary Votes | RSP Watch",
+    title: "Parliamentary Votes | Parliament Watch",
     description:
-      "See how RSP MPs voted on every bill — track party-line votes and defections.",
+      "See how Nepal's MPs voted on every bill — track party-line votes and defections.",
   },
 }
 

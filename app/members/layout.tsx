@@ -1,13 +1,13 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "RSP Members of Parliament",
+  title: "Members of Parliament",
   description:
-    "Directory of all 34 Rastriya Swatantra Party MPs — attendance records, voting history, sponsored bills, and constituency details.",
+    "Directory of Nepal's parliamentary members — attendance records, voting history, sponsored bills, and constituency details.",
   openGraph: {
-    title: "RSP Members of Parliament | RSP Watch",
+    title: "Members of Parliament | Parliament Watch",
     description:
-      "Directory of all 34 Rastriya Swatantra Party MPs — attendance records, voting history, and constituency details.",
+      "Directory of Nepal's parliamentary members — attendance records, voting history, and constituency details.",
   },
 }
 

@@ -13,8 +13,8 @@ export default function AboutPage() {
           Radical Transparency.
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed">
-          RSP Watch is an open-source, non-partisan accountability tracker designed to monitor 
-          the commitments and actions of the Rastriya Swatantra Party in government.
+          Parliament Watch is an open-source, non-partisan accountability tracker designed to monitor
+          the commitments and actions of all political parties in Nepal's Parliament.
         </p>
       </section>
 
@@ -24,9 +24,9 @@ export default function AboutPage() {
           <Shield className="w-8 h-8 text-primary" />
           <h2 className="text-2xl font-bold">Non-Partisan & Independent</h2>
           <p className="text-muted-foreground leading-relaxed">
-            This platform is strictly unaffiliated with the Rastriya Swatantra Party (RSP), its 
-            members, or any rival political organization. We do not provide editorial opinions. 
-            We strictly provide raw, verified parliamentary data and map it against the party's own public promises.
+            This platform is strictly independent and unaffiliated with any political party or organization.
+            We do not provide editorial opinions. We strictly provide raw, verified parliamentary data tracked daily
+            from public government sources.
           </p>
         </div>
         <div className="bg-card border border-border p-8 rounded-md flex flex-col gap-4">
@@ -45,7 +45,7 @@ export default function AboutPage() {
         <div className="flex flex-col gap-3">
           <h2 className="text-3xl font-bold">Built for the Open Web</h2>
           <p className="text-lg text-muted-foreground">
-            The entire codebase and scraping infrastructure powering RSP Watch is freely available on GitHub. 
+            The entire codebase and scraping infrastructure powering Parliament Watch is freely available on GitHub.
             We encourage researchers, journalists, and civic-tech hackers to audit our logic or contribute features.
           </p>
         </div>

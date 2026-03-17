@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "About",
   description:
-    "RSP Watch is a non-partisan, open-source project tracking Rastriya Swatantra Party's parliamentary record through transparent, verified public data.",
+    "Parliament Watch is a non-partisan, open-source project tracking all political parties' parliamentary records through transparent, verified public data.",
   openGraph: {
-    title: "About RSP Watch",
+    title: "About Parliament Watch",
     description:
-      "A non-partisan, open-source project tracking RSP's parliamentary record through transparent, verified public data.",
+      "A non-partisan, open-source project tracking all political parties' parliamentary records through transparent, verified public data.",
   },
 }
 

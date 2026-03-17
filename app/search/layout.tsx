@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Search",
   description:
-    "Search across MPs, laws, bills, promises, statements, and more on RSP Watch.",
+    "Search across MPs, laws, bills, promises, statements, and more on Parliament Watch.",
   openGraph: {
-    title: "Search | RSP Watch",
+    title: "Search | Parliament Watch",
     description:
-      "Search across MPs, laws, bills, promises, statements, and more on RSP Watch.",
+      "Search across MPs, laws, bills, promises, statements, and more on Parliament Watch.",
   },
 }
 

@@ -10,7 +10,7 @@ interface FetchOptions {
 }
 
 const DEFAULT_USER_AGENT =
-  "Mozilla/5.0 (compatible; RSPWatchBot/1.0; +https://rspwatch.np)"
+  "Mozilla/5.0 (compatible; ParliamentWatchBot/1.0; +https://parliamentwatch.np)"
 
 /**
  * Fetch a URL and return a Cheerio instance for HTML parsing.

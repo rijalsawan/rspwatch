@@ -35,19 +35,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ? law.summary.length > 160
       ? law.summary.slice(0, 157) + "..."
       : law.summary
-    : `Details on ${law.title} — a ${law.status.toLowerCase()} ${law.category} bill tracked by RSP Watch.`
+    : `Details on ${law.title} — a ${law.status.toLowerCase()} ${law.category} bill tracked by Parliament Watch.`
 
   return {
     title,
     description,
     openGraph: {
-      title: `${title} | RSP Watch`,
+      title: `${title} | Parliament Watch`,
       description,
     },
   }
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rspwatch.np"
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://parliamentwatch.np"
 
 export default async function LawDetailLayout({ params, children }: Props) {
   const { slug } = await params

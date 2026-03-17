@@ -3,6 +3,7 @@ import { z } from "zod"
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   ADMIN_SECRET: z.string().min(16),
+  NEXTAUTH_SECRET: z.string().min(16).optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   // Scraping config overrides
   SCRAPE_PARLIAMENT_INTERVAL: z.string().default("0 */6 * * *"), // every 6h

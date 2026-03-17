@@ -17,7 +17,7 @@ const API = config.baseUrl // https://api.rspnepal.org
 
 const HEADERS = {
   Accept: "application/json",
-  "User-Agent": "RSPWatch/1.0 (+https://rspwatch.np)",
+  "User-Agent": "ParliamentWatch/1.0 (+https://parliamentwatch.np)",
 }
 
 // ─── Types matching api.rspnepal.org response ──────────────────
@@ -155,6 +155,21 @@ async function extractExecutiveMembers(_dashboard: DashboardResponse) {
   let created = 0
   let updated = 0
 
+  // Ensure the RSP party record exists
+  const rspParty = await prisma.party.upsert({
+    where: { slug: "rsp" },
+    update: {},
+    create: {
+      slug: "rsp",
+      name: "Rastriya Swatantra Party",
+      nameNepali: "राष्ट्रिय स्वतन्त्र पार्टी",
+      abbreviation: "RSP",
+      color: "#0ea5e9",
+      website: "https://rspnepal.org",
+    },
+  })
+  const rspPartyId = rspParty.id
+
   // Fetch all executive members from the dedicated endpoint (paginated API)
   // The API returns: { results: [...], totalPages: 10, pageSize: 10, totalItems: 93 }
   let members: ExecutiveMember[] = []
@@ -251,6 +266,7 @@ async function extractExecutiveMembers(_dashboard: DashboardResponse) {
           photoUrl: photoUrl ?? existing.photoUrl,
           externalId,
           sourceUrl: "https://rspnepal.org/executive-members",
+          partyId: rspPartyId,
         },
       })
       updated++
@@ -269,6 +285,7 @@ async function extractExecutiveMembers(_dashboard: DashboardResponse) {
           externalId,
           sourceUrl: "https://rspnepal.org/executive-members",
           isActive: true,
+          partyId: rspPartyId,
         },
       })
       created++

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
-export const alt = "RSP Watch — Nepal's Parliamentary Accountability Tracker"
+export const alt = "Parliament Watch — Nepal's Parliamentary Accountability Tracker"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -107,10 +107,10 @@ export default function OgImage() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{ color: "#f1f5f9", fontSize: 22, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1 }}>
-                RSP Watch
+                Parliament Watch
               </span>
               <span style={{ color: "#3b82f6", fontSize: 12, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>
-                rspwatch.np
+                parliamentwatch.np
               </span>
             </div>
 
@@ -183,7 +183,7 @@ export default function OgImage() {
                 maxWidth: 440,
               }}
             >
-              Tracking RSP&apos;s promises, votes &amp; laws — transparently.
+              Tracking all parliamentary parties, votes &amp; laws — transparently.
             </p>
           </div>
 

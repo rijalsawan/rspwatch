@@ -197,7 +197,7 @@ function downloadFile(url: string, dest: string): Promise<void> {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log("RSP Watch — Member Photo Downloader")
+  console.log("Parliament Watch — Member Photo Downloader")
   console.log("Source: https://rspnepal.org/executive-members\n")
 
   // Ensure output directory exists

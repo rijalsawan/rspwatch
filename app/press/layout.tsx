@@ -3,11 +3,11 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Press & News",
   description:
-    "Official press releases, announcements, and news from RSP leadership. Live-synced from rspnepal.org.",
+    "Official press releases, announcements, and news from political leaders and organizations.",
   openGraph: {
-    title: "Press & News | RSP Watch",
+    title: "Press & News | Parliament Watch",
     description:
-      "Official press releases, announcements, and news from RSP leadership. Live-synced from rspnepal.org.",
+      "Official press releases, announcements, and news from political leaders and organizations.",
   },
 }
 

@@ -2,10 +2,10 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Public Statements",
-  description: "Official press releases, speeches, and statements made by RSP members and party leadership.",
+  description: "Official press releases, speeches, and statements made by parliamentary members and party leadership.",
   openGraph: {
-    title: "Public Statements | RSP Watch",
-    description: "Official press releases and statements by RSP members and party leadership.",
+    title: "Public Statements | Parliament Watch",
+    description: "Official press releases and statements by parliamentary members and party leadership.",
   },
 }
 
