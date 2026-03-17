@@ -42,7 +42,13 @@ export function useCachedFetch<T>(url: string | null, options?: Options): Result
   const [data, setData] = useState<T | null>(() =>
     !noCache && url ? getCached<T>(url, ttl) : null
   )
-  const [loading, setLoading] = useState<boolean>(!data && !!url)
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (!url) return false
+    if (noCache) return true
+    // If we have cached data, not loading; if no cached data, we are loading
+    const cachedData = getCached<T>(url, ttl)
+    return cachedData === null
+  })
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -68,28 +74,39 @@ export function useCachedFetch<T>(url: string | null, options?: Options): Result
         const json: T = await res.json()
         if (!noCache) setCached<T>(targetUrl, json)
         setData(json)
+        setLoading(false)
       } catch (e) {
+        // Ignore aborts — the effect was cleaned up (e.g. Strict Mode double-invoke,
+        // URL change). Keep loading=true so the next effect run shows the skeleton.
         if ((e as Error).name !== "AbortError") {
           setError((e as Error).message)
+          setLoading(false)
         }
-      } finally {
-        setLoading(false)
       }
     },
     [ttl, noCache]
   )
 
   useEffect(() => {
-    if (!url) return
-
-    // If already have fresh cache, skip the network call
-    if (!noCache && getCached<T>(url, ttl) !== null) {
-      // Already initialised from cache — nothing to do
+    if (!url) {
       setLoading(false)
+      setData(null)
       return
     }
 
+    // Check cache first
+    if (!noCache) {
+      const cached = getCached<T>(url, ttl)
+      if (cached !== null) {
+        setData(cached)
+        setLoading(false)
+        return
+      }
+    }
+
+    // No cache found, start loading
     setLoading(true)
+    setError(null)
     execute(url, false)
     return () => abortRef.current?.abort()
   }, [url, execute, ttl, noCache])

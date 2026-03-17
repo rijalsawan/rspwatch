@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { ActivityFeedItem } from "@/components/shared/ActivityFeedItem"
@@ -61,47 +62,55 @@ const CATEGORIES = ["All Categories", "LAW", "VOTE", "STATEMENT", "PROMISE_UPDAT
 
 export default function TimelinePage() {
   const [items, setItems] = useState<FeedItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("All Categories")
 
-  const fetchFeed = useCallback(async (cursor?: string | null) => {
-    const isMore = !!cursor
-    if (isMore) setLoadingMore(true)
-    else setLoading(true)
+  // Construct initial URL for cached fetch
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "15" })
+    if (typeFilter !== "All Categories") params.set("type", typeFilter)
+    return `/api/feed?${params}`
+  }, [typeFilter])
+
+  // Use cached fetch for initial load
+  const { data: initialResponse, loading } = useCachedFetch<{data: FeedItem[], meta?: {hasMore?: boolean, nextCursor?: string | null}}>(apiUrl)
+
+  // Initialize items and pagination state from response
+  useEffect(() => {
+    if (initialResponse?.data) {
+      setItems(initialResponse.data)
+      setHasMore(initialResponse.meta?.hasMore ?? false)
+      setNextCursor(initialResponse.meta?.nextCursor ?? null)
+    }
+  }, [initialResponse])
+
+  // Manual fetch for "Load More"
+  const fetchMore = useCallback(async (cursor: string | null) => {
+    if (!cursor) return
+    setLoadingMore(true)
 
     try {
-      const params = new URLSearchParams({ limit: "15" })
-      if (cursor) params.set("cursor", cursor)
+      const params = new URLSearchParams({ limit: "15", cursor })
       if (typeFilter !== "All Categories") params.set("type", typeFilter)
 
       const res = await fetch(`/api/feed?${params}`)
       const json = await res.json()
       if (json.data) {
-        if (isMore) {
-          setItems(prev => [...prev, ...json.data])
-        } else {
-          setItems(json.data)
-        }
+        setItems(prev => [...prev, ...json.data])
       }
       if (json.meta) {
         setHasMore(json.meta.hasMore ?? false)
         setNextCursor(json.meta.nextCursor ?? null)
       }
     } catch (e) {
-      console.error("Failed to load feed:", e)
+      console.error("Failed to load more feed:", e)
     } finally {
-      setLoading(false)
       setLoadingMore(false)
     }
   }, [typeFilter])
-
-  useEffect(() => {
-    fetchFeed()
-  }, [fetchFeed])
 
   const filtered = search
     ? items.filter(item => item.title.toLowerCase().includes(search.toLowerCase()) || (item.summary ?? "").toLowerCase().includes(search.toLowerCase()))
@@ -179,7 +188,7 @@ export default function TimelinePage() {
           {hasMore && (
             <div className="pt-8 pb-4 flex justify-center border-t border-border mt-8">
               <button
-                onClick={() => fetchFeed(nextCursor)}
+                onClick={() => fetchMore(nextCursor)}
                 disabled={loadingMore}
                 className="text-sm font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm px-2 py-1"
               >

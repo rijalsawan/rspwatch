@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { Button } from "@/components/ui/button"
@@ -30,37 +31,24 @@ interface EventData {
 }
 
 export default function EventsPage() {
-  const [events, setEvents] = useState<EventData[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
-  const [showUpcoming, setShowUpcoming] = useState(false)
   const limit = 12
 
-  useEffect(() => {
-    async function fetchEvents() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: limit.toString(),
-        })
-        if (showUpcoming) params.set("upcoming", "true")
+  // Construct the API URL based on current filters
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    })
+    return `/api/events?${params}`
+  }, [page])
 
-        const res = await fetch(`/api/events?${params}`)
-        const json = await res.json()
-        if (json.data) {
-          setEvents(json.data)
-          setTotal(json.meta?.total ?? 0)
-        }
-      } catch (e) {
-        console.error("Failed to load events:", e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchEvents()
-  }, [page, showUpcoming])
+  // Use cached fetch with constructed URL
+  const { data: eventsResponse, loading } = useCachedFetch<{data: EventData[], meta?: {total: number}}>(apiUrl)
+
+  // Extract data from response
+  const events = eventsResponse?.data ?? []
+  const total = eventsResponse?.meta?.total ?? 0
 
   const totalPages = Math.ceil(total / limit)
 
@@ -83,10 +71,24 @@ export default function EventsPage() {
     }
   }
 
+  // Utility function to strip HTML tags and decode entities
+  const stripHtml = (html: string): string => {
+    return html
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+      .replace(/&amp;/g, '&') // Replace &amp; with &
+      .replace(/&lt;/g, '<') // Replace &lt; with <
+      .replace(/&gt;/g, '>') // Replace &gt; with >
+      .replace(/&quot;/g, '"') // Replace &quot; with "
+      .replace(/&#39;/g, "'") // Replace &#39; with '
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim() // Remove leading/trailing whitespace
+  }
+
   return (
     <PageTransition className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-8 w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 max-w-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-md bg-primary/10">
@@ -108,38 +110,45 @@ export default function EventsPage() {
             {total > 0 && <span className="font-medium text-foreground"> {total} events</span>}
           </p>
         </div>
-
-        {/* Filter toggle */}
-        <div className="flex gap-2">
-          <Button
-            variant={!showUpcoming ? "default" : "outline"}
-            size="sm"
-            onClick={() => { setShowUpcoming(false); setPage(1) }}
-          >
-            <CalendarCheck className="w-4 h-4 mr-1.5" />
-            All Events
-          </Button>
-          <Button
-            variant={showUpcoming ? "default" : "outline"}
-            size="sm"
-            onClick={() => { setShowUpcoming(true); setPage(1) }}
-          >
-            <Calendar className="w-4 h-4 mr-1.5" />
-            Upcoming
-          </Button>
-        </div>
       </div>
 
       {/* Events List */}
       {loading ? (
         <div className="flex flex-col gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-lg p-6 animate-pulse">
-              <div className="flex gap-4">
-                <div className="w-16 h-16 bg-muted rounded-md" />
-                <div className="flex-1">
-                  <div className="h-5 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-4 bg-muted rounded w-1/2" />
+            <div key={i} className="bg-card border border-border rounded-lg overflow-hidden animate-pulse">
+              <div className="flex">
+                {/* Optional side image placeholder */}
+                <div className="hidden md:block w-48 shrink-0 bg-muted" />
+
+                <div className="flex gap-4 p-5 flex-1 min-w-0">
+                  {/* Date badge placeholder */}
+                  <div className="flex flex-col items-center justify-center min-w-[60px] p-3 rounded-md bg-muted">
+                    <div className="h-3 w-8 bg-muted-foreground/20 rounded mb-1" />
+                    <div className="h-6 w-6 bg-muted-foreground/20 rounded mb-1" />
+                    <div className="h-3 w-8 bg-muted-foreground/20 rounded" />
+                  </div>
+
+                  {/* Event details placeholder */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="h-5 bg-muted rounded w-3/4 mb-2" />
+                        <div className="h-4 bg-muted rounded w-1/2" />
+                      </div>
+                      <div className="h-5 bg-muted rounded w-16 shrink-0" />
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="h-3 bg-muted rounded w-full" />
+                      <div className="h-3 bg-muted rounded w-5/6" />
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="h-4 bg-muted rounded w-20" />
+                      <div className="h-4 bg-muted rounded w-24 ml-auto" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -198,11 +207,11 @@ export default function EventsPage() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <h3 className="font-semibold text-foreground line-clamp-2">
-                                  {event.title}
+                                  {stripHtml(event.title)}
                                 </h3>
                                 {event.titleNp && event.titleNp !== event.title && (
                                   <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
-                                    {event.titleNp}
+                                    {stripHtml(event.titleNp)}
                                   </p>
                                 )}
                               </div>
@@ -218,7 +227,7 @@ export default function EventsPage() {
 
                             {event.summary && (
                               <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                                {event.summary}
+                                {stripHtml(event.summary)}
                               </p>
                             )}
 
@@ -254,7 +263,7 @@ export default function EventsPage() {
           <CalendarDays className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="font-semibold text-lg">No events found</h3>
           <p className="text-muted-foreground mt-1">
-            {showUpcoming ? "No upcoming events scheduled." : "Events will appear here once added."}
+            Events will appear here once added.
           </p>
         </div>
       )}

@@ -11,7 +11,12 @@ type VoteWithMembers = {
   sourceUrl: string | null
   memberVotes: Array<{
     choice: "YEA" | "NAY" | "ABSTAIN" | "ABSENT"
-    member: { id: string; slug: string; name: string }
+    member: {
+      id: string
+      slug: string
+      name: string
+      party: { abbreviation: string; color: string | null } | null
+    }
   }>
 }
 
@@ -36,9 +41,17 @@ export async function GET(
           orderBy: { date: "desc" },
           include: {
             memberVotes: {
-              select: {
-                choice: true,
-                member: { select: { id: true, slug: true, name: true } },
+              include: {
+                member: {
+                  select: {
+                    id: true,
+                    slug: true,
+                    name: true,
+                    party: {
+                      select: { abbreviation: true, color: true }
+                    },
+                  },
+                },
               },
             },
           },
@@ -72,6 +85,7 @@ export async function GET(
           memberName: mv.member.name,
           memberSlug: mv.member.slug,
           choice: mv.choice,
+          party: mv.member.party ?? null,
         })),
       }
     })

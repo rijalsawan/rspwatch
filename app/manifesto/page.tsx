@@ -1,11 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import Link from "next/link"
+import { PromiseCard, type PromiseStatus as CardStatus } from "@/components/domain/PromiseCard"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import {
   Download,
   FileText,
@@ -30,6 +34,13 @@ const STATUS_CONFIG = {
   IN_PROGRESS: { icon: Clock, color: "text-warning", bg: "bg-warning/10", label: "In Progress" },
   BROKEN: { icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", label: "Broken" },
   NOT_STARTED: { icon: CircleDashed, color: "text-muted-foreground", bg: "bg-muted/50", label: "Not Started" },
+}
+
+function toCardStatus(s: string): CardStatus {
+  const map: Record<string, CardStatus> = {
+    KEPT: "kept", IN_PROGRESS: "in-progress", BROKEN: "broken", NOT_STARTED: "not-started",
+  }
+  return map[s] ?? "not-started"
 }
 
 // Manifesto pillar definitions with icons
@@ -78,54 +89,19 @@ interface ApiResponse {
 }
 
 export default function ManifestoPage() {
-  const [promises, setPromises] = useState<PromiseData[]>([])
-  const [documents, setDocuments] = useState<DocumentData[]>([])
-  const [docsLoading, setDocsLoading] = useState(true)
-  const [statusSummary, setStatusSummary] = useState<Record<string, number>>({
-    KEPT: 0,
-    IN_PROGRESS: 0,
-    BROKEN: 0,
-    NOT_STARTED: 0,
-  })
-  const [categoryBreakdown, setCategoryBreakdown] = useState<Record<string, Record<string, number>>>({})
-  const [loading, setLoading] = useState(true)
   const [selectedPillar, setSelectedPillar] = useState<string | null>(null)
 
-  useEffect(() => {
-    async function loadPromises() {
-      setLoading(true)
-      try {
-        const res = await fetch("/api/promises")
-        const json: ApiResponse = await res.json()
-        const manifestoPromises = (json.data || []).filter(
-          (p) => p.source === "MANIFESTO" || p.source === "CITIZEN_CONTRACT"
-        )
-        setPromises(manifestoPromises)
-        if (json.meta?.byStatus) setStatusSummary(json.meta.byStatus)
-        if (json.meta?.byCategory) setCategoryBreakdown(json.meta.byCategory)
-      } catch (e) {
-        console.error("Failed to load manifesto promises:", e)
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Use cached fetch for both APIs
+  const { data: promisesResponse, loading: promisesLoading } = useCachedFetch<ApiResponse>("/api/promises")
+  const { data: documentsResponse, loading: docsLoading } = useCachedFetch<{data: DocumentData[]}>("/api/manifesto/documents")
 
-    async function loadDocuments() {
-      setDocsLoading(true)
-      try {
-        const res = await fetch("/api/manifesto/documents")
-        const json = await res.json()
-        setDocuments(json.data || [])
-      } catch (e) {
-        console.error("Failed to load RSP documents:", e)
-      } finally {
-        setDocsLoading(false)
-      }
-    }
-
-    loadPromises()
-    loadDocuments()
-  }, [])
+  // Extract and filter data
+  const allPromises = promisesResponse?.data ?? []
+  const promises = allPromises.filter(p => p.source === "MANIFESTO" || p.source === "CITIZEN_CONTRACT")
+  const documents = documentsResponse?.data ?? []
+  const statusSummary = promisesResponse?.meta?.byStatus ?? { KEPT: 0, IN_PROGRESS: 0, BROKEN: 0, NOT_STARTED: 0 }
+  const categoryBreakdown = promisesResponse?.meta?.byCategory ?? {}
+  const loading = promisesLoading
 
   const filteredPromises = selectedPillar
     ? promises.filter((p) => p.category === selectedPillar)
@@ -184,7 +160,7 @@ export default function ManifestoPage() {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold tabular-nums">{progressPercentage}%</span>
+                <span className="text-2xl font-bold tabular-nums"><GlitchNumber value={progressPercentage} />%</span>
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -226,9 +202,9 @@ export default function ManifestoPage() {
                     </span>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-display font-bold tabular-nums">{count}</span>
-                    <span className="text-sm font-medium text-muted-foreground">
-                      ({Math.round((count / total) * 100)}%)
+                      <span className="text-4xl font-display font-bold tabular-nums"><GlitchNumber value={count} /></span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        (<GlitchNumber value={Math.round((count / total) * 100)} />%)
                     </span>
                   </div>
                 </div>
@@ -253,7 +229,7 @@ export default function ManifestoPage() {
                   <span className="font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">{category}</span>
                   <div className="flex flex-col items-end">
                     <span className="text-2xl font-display font-bold text-success tabular-nums leading-none">
-                      {kept}%
+                        <GlitchNumber value={kept} />%
                     </span>
                     <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-1">Kept</span>
                   </div>
@@ -261,10 +237,10 @@ export default function ManifestoPage() {
                 
                 {/* Segmented Bar */}
                 <div className="flex w-full h-3.5 gap-1 rounded-sm overflow-hidden bg-background">
-                  {kept > 0 && <div className="bg-success h-full transition-all duration-500 ease-out" style={{ width: `${kept}%` }} />}
-                  {inProgress > 0 && <div className="bg-warning h-full transition-all duration-500 ease-out" style={{ width: `${inProgress}%` }} />}
-                  {broken > 0 && <div className="bg-destructive h-full transition-all duration-500 ease-out" style={{ width: `${broken}%` }} />}
-                  {pending > 0 && <div className="bg-muted h-full transition-all duration-500 ease-out" style={{ width: `${pending}%` }} />}
+                  {kept > 0 && <AnimatedProgress className="bg-success h-full" value={kept} delay={0.1} />}
+                  {inProgress > 0 && <AnimatedProgress className="bg-warning h-full" value={inProgress} delay={0.2} />}
+                  {broken > 0 && <AnimatedProgress className="bg-destructive h-full" value={broken} delay={0.3} />}
+                  {pending > 0 && <AnimatedProgress className="bg-muted h-full" value={pending} delay={0.4} />}
                 </div>
 
                 {/* Legend */}
@@ -451,47 +427,19 @@ export default function ManifestoPage() {
             </div>
           ) : filteredPromises.length > 0 ? (
             <StaggerList className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredPromises.map((promise) => {
-                const config = STATUS_CONFIG[promise.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.NOT_STARTED
-                const Icon = config.icon
-                return (
-                  <div
-                    key={promise.id}
-                    className="p-5 border border-border rounded-md bg-card hover:border-primary/30 transition-colors"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className={`p-1.5 rounded-sm ${config.bg} shrink-0`}>
-                        <Icon className={`w-4 h-4 ${config.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {promise.category}
-                          </span>
-                          <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
-                        </div>
-                        <h4 className="font-semibold text-foreground line-clamp-2">{promise.title}</h4>
-                      </div>
-                    </div>
-                    {promise.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {promise.description}
-                      </p>
-                    )}
-                    {promise.evidenceUrl && (
-                      <a
-                        href={promise.evidenceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                      >
-                        View Evidence
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                )
-              })}
+              {filteredPromises.map((promise) => (
+                <PromiseCard
+                  key={promise.id}
+                  id={promise.id}
+                  slug={promise.slug}
+                  title={promise.title}
+                  description={promise.description ?? ""}
+                  category={promise.category}
+                  status={toCardStatus(promise.status)}
+                  source={promise.source ?? "MANIFESTO"}
+                  evidenceUrl={promise.evidenceUrl ?? undefined}
+                />
+              ))}
             </StaggerList>
           ) : (
             <div className="text-center py-12 text-muted-foreground">

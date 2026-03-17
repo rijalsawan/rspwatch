@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, Suspense } from "react"
+import { useCallback, useEffect, useRef, useState, Suspense, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
@@ -292,11 +293,19 @@ function SearchPageContent() {
 
   const [inputValue, setInputValue] = useState(initialQ)
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
-  const [data, setData] = useState<SearchData | null>(null)
-  const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const debouncedInput = useDebounce(inputValue, 320)
+
+  // Construct API URL based on debounced input
+  const apiUrl = useMemo(() => {
+    return debouncedInput.trim()
+      ? `/api/search?q=${encodeURIComponent(debouncedInput.trim())}&limit=12`
+      : `/api/search`
+  }, [debouncedInput])
+
+  // Use cached fetch for search results
+  const { data, loading } = useCachedFetch<SearchData>(apiUrl)
 
   // Sync URL when query or tab changes
   const updateUrl = useCallback(
@@ -313,18 +322,6 @@ function SearchPageContent() {
   useEffect(() => {
     updateUrl(debouncedInput, activeTab)
   }, [debouncedInput, activeTab, updateUrl])
-
-  // Fetch results whenever debounced query changes
-  useEffect(() => {
-    setLoading(true)
-    const url = debouncedInput.trim()
-      ? `/api/search?q=${encodeURIComponent(debouncedInput.trim())}&limit=12`
-      : `/api/search`
-    fetch(url)
-      .then((r) => r.json())
-      .then((json) => { if (json.data) setData(json.data as SearchData) })
-      .finally(() => setLoading(false))
-  }, [debouncedInput])
 
   const hasQuery = inputValue.trim().length > 0
   const isReady = !loading && data !== null

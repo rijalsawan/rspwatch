@@ -1,8 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { PromiseCard, type PromiseStatus } from "@/components/domain/PromiseCard"
 import { Input } from "@/components/ui/input"
 import { CheckCircle2, Clock, XCircle, CircleDashed, Search } from "lucide-react"
@@ -15,6 +18,7 @@ interface PromiseData {
   category: string
   status: string
   source: string | null
+  confidence: string
   evidenceUrl: string | null
   lastUpdated: string
 }
@@ -29,37 +33,32 @@ function dbStatusToFrontend(status: string): PromiseStatus {
   return map[status] ?? "not-started"
 }
 
+interface PromisesResponse {
+  data: PromiseData[]
+  meta: {
+    byStatus: Record<string, number>
+    byCategory: Record<string, Record<string, number>>
+  }
+}
+
 export default function PromisesPage() {
-  const [promises, setPromises] = useState<PromiseData[]>([])
-  const [statusSummary, setStatusSummary] = useState<Record<string, number>>({ KEPT: 0, IN_PROGRESS: 0, BROKEN: 0, NOT_STARTED: 0 })
-  const [categoryBreakdown, setCategoryBreakdown] = useState<Record<string, Record<string, number>>>({})
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams()
-        if (statusFilter) params.set("status", statusFilter)
-        if (categoryFilter) params.set("category", categoryFilter)
-        const res = await fetch(`/api/promises?${params}`)
-        const json = await res.json()
-        if (json.data) setPromises(json.data)
-        if (json.meta) {
-          if (json.meta.byStatus) setStatusSummary(json.meta.byStatus)
-          if (json.meta.byCategory) setCategoryBreakdown(json.meta.byCategory)
-        }
-      } catch (e) {
-        console.error("Failed to load promises:", e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams()
+    if (statusFilter) params.set("status", statusFilter)
+    if (categoryFilter) params.set("category", categoryFilter)
+    const qs = params.toString()
+    return `/api/promises${qs ? `?${qs}` : ""}`
   }, [statusFilter, categoryFilter])
+
+  const { data: response, loading } = useCachedFetch<PromisesResponse>(apiUrl)
+
+  const promises = response?.data ?? []
+  const statusSummary = response?.meta?.byStatus ?? { KEPT: 0, IN_PROGRESS: 0, BROKEN: 0, NOT_STARTED: 0 }
+  const categoryBreakdown = response?.meta?.byCategory ?? {}
 
   const total = statusSummary.KEPT + statusSummary.IN_PROGRESS + statusSummary.BROKEN + statusSummary.NOT_STARTED || 1
   const stats = [
@@ -131,18 +130,18 @@ export default function PromisesPage() {
                     <span className="font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">{c.cat}</span>
                     <div className="flex flex-col items-end">
                       <span className="text-2xl font-display font-bold text-success tabular-nums leading-none">
-                        {c.kept}%
+                        <GlitchNumber value={c.kept} />%
                       </span>
                       <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-1">Kept</span>
                     </div>
                   </div>
-                  
+
                   {/* Segmented Bar */}
                   <div className="flex w-full h-3.5 gap-1 rounded-sm overflow-hidden bg-background">
-                    {c.kept > 0 && <div className="bg-success h-full transition-all duration-500 ease-out" style={{ width: `${c.kept}%` }} />}
-                    {c.inProgress > 0 && <div className="bg-warning h-full transition-all duration-500 ease-out" style={{ width: `${c.inProgress}%` }} />}
-                    {c.broken > 0 && <div className="bg-destructive h-full transition-all duration-500 ease-out" style={{ width: `${c.broken}%` }} />}
-                    {pending > 0 && <div className="bg-muted h-full transition-all duration-500 ease-out" style={{ width: `${pending}%` }} />}
+                    {c.kept > 0 && <AnimatedProgress className="bg-success h-full" value={c.kept} delay={0.1} />}
+                    {c.inProgress > 0 && <AnimatedProgress className="bg-warning h-full" value={c.inProgress} delay={0.2} />}
+                    {c.broken > 0 && <AnimatedProgress className="bg-destructive h-full" value={c.broken} delay={0.3} />}
+                    {pending > 0 && <AnimatedProgress className="bg-muted h-full" value={pending} delay={0.4} />}
                   </div>
 
                   {/* Legend */}
@@ -211,12 +210,14 @@ export default function PromisesPage() {
               <PromiseCard
                 key={promise.id}
                 id={promise.id}
+                slug={promise.slug}
                 title={promise.title}
                 description={promise.description ?? ""}
                 category={promise.category}
                 status={dbStatusToFrontend(promise.status)}
                 source={promise.source ?? ""}
-                evidenceTarget={promise.evidenceUrl ?? undefined}
+                confidence={promise.confidence as "VERIFIED" | "SCRAPED" | "MANUAL"}
+                evidenceUrl={promise.evidenceUrl ?? undefined}
               />
             ))}
           </StaggerList>

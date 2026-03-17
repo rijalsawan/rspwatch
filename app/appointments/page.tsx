@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { motion } from "framer-motion"
 import { Briefcase, Calendar, CheckCircle2, Database, PenLine, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -39,19 +40,13 @@ const CONFIDENCE_CONFIG = {
 
 export default function AppointmentsPage() {
   const [filter, setFilter] = useState("All")
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [loading, setLoading] = useState(true)
 
   const categories = ["All", "Cabinet", "Committee", "Structural"]
 
-  useEffect(() => {
-    fetch("/api/appointments?limit=50")
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) setAppointments(json.data as Appointment[])
-      })
-      .finally(() => setLoading(false))
-  }, [])
+  // Use cached fetch
+  const { data: appointmentsResponse, loading } = useCachedFetch<{data: Appointment[]}>("/api/appointments?limit=50")
+
+  const appointments = appointmentsResponse?.data ?? []
 
   const filteredAppointments = filter === "All"
     ? appointments
@@ -88,7 +83,34 @@ export default function AppointmentsPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl p-6 h-52 animate-pulse" />
+            <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse flex flex-col">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-muted shrink-0" />
+                  <div>
+                    <div className="h-5 bg-muted rounded w-32 mb-2" />
+                    <div className="h-4 bg-muted rounded-full w-20" />
+                  </div>
+                </div>
+                <div className="h-4 bg-muted rounded-full w-16 shrink-0" />
+              </div>
+
+              <div className="mb-4">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+              </div>
+
+              <div className="space-y-2 mb-6 flex-1">
+                <div className="h-3 bg-muted rounded w-full" />
+                <div className="h-3 bg-muted rounded w-5/6" />
+                <div className="h-3 bg-muted rounded w-2/3" />
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
+                <div className="h-3 bg-muted rounded w-20" />
+                <div className="h-6 bg-muted rounded w-16" />
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredAppointments.length === 0 ? (

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { Button } from "@/components/ui/button"
@@ -36,47 +37,54 @@ interface ApiMeta {
   hasMore: boolean
 }
 
-const CATEGORIES = [
-  { value: "all", label: "All" },
-  { value: "news", label: "News" },
-  { value: "press", label: "Press Release" },
-]
+
+
+// Utility function to strip HTML tags and decode entities
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/&amp;/g, '&') // Replace &amp; with &
+    .replace(/&lt;/g, '<') // Replace &lt; with <
+    .replace(/&gt;/g, '>') // Replace &gt; with >
+    .replace(/&quot;/g, '"') // Replace &quot; with "
+    .replace(/&#39;/g, "'") // Replace &#39; with '
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim() // Remove leading/trailing whitespace
+}
+
+interface NewsResponse {
+  data: NewsItem[]
+  meta: ApiMeta
+}
 
 export default function PressPage() {
-  const [items, setItems] = useState<NewsItem[]>([])
-  const [meta, setMeta] = useState<ApiMeta | null>(null)
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [category, setCategory] = useState("all")
   const [page, setPage] = useState(1)
   const limit = 12
 
-  const fetchNews = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
-      if (search) params.set("q", search)
-      if (category !== "all") params.set("category", category)
-
-      const res = await fetch(`/api/news?${params}`)
-      const json = await res.json()
-      if (json.data) {
-        setItems(json.data)
-        setMeta(json.meta ?? null)
-      }
-    } catch (e) {
-      console.error("Failed to load news:", e)
-    } finally {
-      setLoading(false)
-    }
-  }, [page, search, category])
-
+  // Debounce search input
   useEffect(() => {
-    const timer = setTimeout(fetchNews, search ? 350 : 0)
-    return () => clearTimeout(timer)
-  }, [fetchNews, search])
+    const t = setTimeout(() => setDebouncedSearch(search), 350)
+    return () => clearTimeout(t)
+  }, [search])
 
-  useEffect(() => { setPage(1) }, [search, category])
+  // Reset to page 1 on search/category change
+  useEffect(() => { setPage(1) }, [debouncedSearch, category])
+
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
+    if (debouncedSearch) params.set("q", debouncedSearch)
+    if (category !== "all") params.set("category", category)
+    return `/api/news?${params}`
+  }, [page, debouncedSearch, category])
+
+  const { data: response, loading } = useCachedFetch<NewsResponse>(apiUrl)
+
+  const items = response?.data ?? []
+  const meta = response?.meta ?? null
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {
@@ -118,21 +126,7 @@ export default function PressPage() {
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-muted/50 rounded-md p-1">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setCategory(cat.value)}
-              className={`px-4 py-1.5 rounded-sm text-sm font-medium transition-colors ${
-                category === cat.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        
 
         {meta && (
           <span className="text-sm text-muted-foreground sm:ml-auto shrink-0">
@@ -146,13 +140,31 @@ export default function PressPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-card border border-border rounded-lg overflow-hidden animate-pulse">
-              <div className="h-48 bg-muted" />
-              <div className="p-5 flex flex-col gap-3">
-                <div className="h-3 bg-muted rounded w-1/3" />
-                <div className="h-5 bg-muted rounded w-full" />
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-4 bg-muted rounded w-full" />
-                <div className="h-4 bg-muted rounded w-2/3" />
+              {/* Cover image placeholder */}
+              <div className="relative h-48 bg-muted">
+                {/* Tags placeholder */}
+                <div className="absolute top-3 left-3 flex gap-1.5">
+                  <div className="h-5 w-12 bg-background/90 border border-border/50 rounded-full" />
+                </div>
+              </div>
+
+              {/* Content placeholder */}
+              <div className="p-5 flex flex-col gap-2.5">
+                {/* Date placeholder */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3.5 h-3.5 bg-muted rounded" />
+                  <div className="h-3 bg-muted rounded w-24" />
+                </div>
+
+                {/* Title placeholders */}
+                <div className="h-5 bg-muted rounded w-full mb-2" />
+                <div className="h-4 bg-muted rounded w-3/4 mb-3" />
+
+                {/* Summary placeholder */}
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted rounded w-full" />
+                  <div className="h-4 bg-muted rounded w-2/3" />
+                </div>
               </div>
             </div>
           ))}
@@ -213,21 +225,21 @@ export default function PressPage() {
                 {/* Nepali title — primary, as shown on rspnepal.org */}
                 {item.titleNp && (
                   <h2 className="font-bold text-base text-foreground leading-snug line-clamp-3 group-hover:text-primary transition-colors">
-                    {item.titleNp}
+                    {stripHtml(item.titleNp)}
                   </h2>
                 )}
 
                 {/* English title — only show if meaningfully different */}
                 {item.title && item.title !== item.titleNp && !item.title.match(/^(news|press)/i) && (
                   <p className="text-xs text-muted-foreground line-clamp-1 italic">
-                    {item.title}
+                    {stripHtml(item.title)}
                   </p>
                 )}
 
                 {/* Excerpt */}
                 {item.excerpt && (
                   <p className="text-sm text-muted-foreground line-clamp-2 flex-1 mt-0.5">
-                    {item.excerpt}
+                    {stripHtml(item.excerpt)}
                   </p>
                 )}
 

@@ -20,7 +20,12 @@ export async function GET(
           select: {
             choice: true,
             member: {
-              select: { id: true, slug: true, name: true },
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                party: { select: { abbreviation: true, color: true } },
+              },
             },
           },
           orderBy: { member: { name: "asc" } },
@@ -56,6 +61,9 @@ export async function GET(
         memberName: mv.member.name,
         memberSlug: mv.member.slug,
         choice: mv.choice,
+        party: mv.member.party
+          ? { abbreviation: mv.member.party.abbreviation, color: mv.member.party.color }
+          : null,
       })),
     })
   } catch (e) {

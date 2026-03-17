@@ -1,7 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
 import { Button } from "@/components/ui/button"
@@ -34,7 +36,12 @@ interface VoteBreakdown {
   outcome: string
   description: string
   breakdown: { yea: number; nay: number; abstain: number; absent: number }
-  memberVotes: { memberName: string; memberSlug: string; choice: string }[]
+  memberVotes: {
+    memberName: string
+    memberSlug: string
+    choice: string
+    party: { abbreviation: string; color: string | null } | null
+  }[]
 }
 
 interface RelatedStatement {
@@ -54,33 +61,28 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
 }
 
+interface LawDetailResponse {
+  data: {
+    law: LawDetail
+    votes: VoteBreakdown[]
+    relatedStatements: RelatedStatement[]
+  }
+  error?: string
+}
+
 export default function LawDetailPage() {
   const { slug } = useParams()
   const slugStr = typeof slug === "string" ? slug : (slug?.[0] ?? "")
 
-  const [law, setLaw] = useState<LawDetail | null>(null)
-  const [votes, setVotes] = useState<VoteBreakdown[]>([])
-  const [statements, setStatements] = useState<RelatedStatement[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // Use cached fetch for law detail
+  const { data: lawResponse, loading, error } = useCachedFetch<LawDetailResponse>(
+    slugStr ? `/api/laws/${slugStr}` : null
+  )
 
-  useEffect(() => {
-    if (!slugStr) return
-    async function load() {
-      try {
-        const res = await fetch(`/api/laws/${slugStr}`)
-        const json = await res.json()
-        if (json.error) { setError(json.error); return }
-        if (json.data) {
-          setLaw(json.data.law)
-          setVotes(json.data.votes ?? [])
-          setStatements(json.data.relatedStatements ?? [])
-        }
-      } catch { setError("Failed to load law details") }
-      finally { setLoading(false) }
-    }
-    load()
-  }, [slugStr])
+  const law = lawResponse?.data?.law ?? null
+  const votes = lawResponse?.data?.votes ?? []
+  const statements = lawResponse?.data?.relatedStatements ?? []
+  const errorMsg = lawResponse?.error ?? (error ? "Failed to load law details" : null)
 
   if (loading) {
     return (
@@ -96,7 +98,7 @@ export default function LawDetailPage() {
     )
   }
 
-  if (error || !law) {
+  if (errorMsg || !law) {
     return (
       <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full min-h-[70vh]">
         <Link href="/laws" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors w-fit">
@@ -206,18 +208,49 @@ export default function LawDetailPage() {
                     {/* Breakdown Bar */}
                     <div className="flex flex-col gap-2 mt-6">
                       <div className="flex w-full h-3 rounded-sm overflow-hidden bg-muted gap-0.5">
-                        {vote.breakdown.yea > 0 && <div className="bg-success h-full" style={{ width: `${(vote.breakdown.yea / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
-                        {vote.breakdown.nay > 0 && <div className="bg-destructive h-full" style={{ width: `${(vote.breakdown.nay / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
-                        {vote.breakdown.abstain > 0 && <div className="bg-warning h-full" style={{ width: `${(vote.breakdown.abstain / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
-                        {vote.breakdown.absent > 0 && <div className="bg-muted-foreground/30 h-full" style={{ width: `${(vote.breakdown.absent / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100}%` }} />}
+                        {vote.breakdown.yea > 0 && <AnimatedProgress className="bg-success h-full" value={(vote.breakdown.yea / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100} delay={0.1} />}
+                        {vote.breakdown.nay > 0 && <AnimatedProgress className="bg-destructive h-full" value={(vote.breakdown.nay / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100} delay={0.2} />}
+                        {vote.breakdown.abstain > 0 && <AnimatedProgress className="bg-warning h-full" value={(vote.breakdown.abstain / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100} delay={0.3} />}
+                        {vote.breakdown.absent > 0 && <AnimatedProgress className="bg-muted-foreground/30 h-full" value={(vote.breakdown.absent / Object.values(vote.breakdown).reduce((a,b)=>a+b,0)) * 100} delay={0.4} />}
                       </div>
                       <div className="flex flex-wrap justify-between text-xs font-medium text-muted-foreground mt-1">
-                        <span className="text-success">{vote.breakdown.yea} Yea</span>
-                        <span className="text-destructive">{vote.breakdown.nay} Nay</span>
-                        <span className="text-warning">{vote.breakdown.abstain} Abstain</span>
-                        <span>{vote.breakdown.absent} Absent</span>
+                        <span className="text-success"><GlitchNumber value={vote.breakdown.yea} /> Yea</span>
+                        <span className="text-destructive"><GlitchNumber value={vote.breakdown.nay} /> Nay</span>
+                        <span className="text-warning"><GlitchNumber value={vote.breakdown.abstain} /> Abstain</span>
+                        <span><GlitchNumber value={vote.breakdown.absent} /> Absent</span>
                       </div>
                     </div>
+
+                    {/* Individual Member Votes */}
+                    {vote.memberVotes.length > 0 && (
+                      <details className="mt-4 group/details">
+                        <summary className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-primary transition-colors select-none">
+                          View {vote.memberVotes.length} individual votes
+                        </summary>
+                        <div className="mt-3 flex flex-col gap-0">
+                          {vote.memberVotes.map((mv) => (
+                            <div key={mv.memberSlug} className="flex items-center justify-between gap-2 py-2 border-b border-border/40 last:border-0">
+                              <div className="flex items-center gap-2">
+                                <Link href={`/members/${mv.memberSlug}`} className="text-sm font-medium hover:text-primary transition-colors">
+                                  {mv.memberName}
+                                </Link>
+                                {mv.party && (
+                                  <span
+                                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm text-white shrink-0"
+                                    style={{ backgroundColor: mv.party.color ?? "#64748b" }}
+                                  >
+                                    {mv.party.abbreviation}
+                                  </span>
+                                )}
+                              </div>
+                              <StatusBadge status={mv.choice === "YEA" ? "success" : mv.choice === "NAY" ? "destructive" : "warning"}>
+                                {mv.choice}
+                              </StatusBadge>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 ))}
               </div>

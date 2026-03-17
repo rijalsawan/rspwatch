@@ -66,7 +66,7 @@ export default function AboutPage() {
       </section>
 
       {/* Contribution Guidelines */}
-      <section className="flex flex-col gap-6 bg-primary/5 border border-primary/20 p-8 md:p-10 rounded-md">
+      <section id="contribute" className="flex flex-col gap-6 bg-primary/5 border border-primary/20 p-8 md:p-10 rounded-md">
         <div className="flex items-center gap-3 mb-2">
           <Users className="w-6 h-6 text-primary" />
           <h2 className="text-2xl font-bold text-foreground">How to Contribute</h2>
@@ -76,9 +76,15 @@ export default function AboutPage() {
           Civil accountability is a community effort. You can submit data correction requests directly through our 
           repository issue tracker.
         </p>
-        <button className="bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-md w-fit hover:-translate-y-0.5 transition-transform mt-2">
+        <a
+          href="https://github.com/rijalsawan/rspwatch/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-md w-fit hover:-translate-y-0.5 transition-transform mt-2"
+        >
+          <Github className="w-4 h-4" />
           Report an Issue via GitHub
-        </button>
+        </a>
       </section>
 
     </PageTransition>

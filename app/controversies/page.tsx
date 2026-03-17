@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { Search, AlertTriangle, ShieldAlert, AlertCircle, Info, Calendar, User } from "lucide-react"
 import Link from "next/link"
@@ -28,19 +29,18 @@ function getSeverityDetails(severity: string) {
 export default function ControversiesPage() {
   const [search, setSearch] = useState("")
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL")
-  const [controversies, setControversies] = useState<Controversy[]>([])
-  const [loading, setLoading] = useState(true)
 
-  // Re-fetch when severity filter changes
-  useEffect(() => {
-    setLoading(true)
+  // Construct API URL based on severity filter
+  const apiUrl = useMemo(() => {
     const params = new URLSearchParams({ limit: "50" })
     if (filterSeverity !== "ALL") params.set("severity", filterSeverity)
-    fetch(`/api/controversies?${params}`)
-      .then((r) => r.json())
-      .then((json) => { if (json.data) setControversies(json.data as Controversy[]) })
-      .finally(() => setLoading(false))
+    return `/api/controversies?${params}`
   }, [filterSeverity])
+
+  // Use cached fetch
+  const { data: controversiesResponse, loading } = useCachedFetch<{data: Controversy[]}>(apiUrl)
+
+  const controversies = controversiesResponse?.data ?? []
 
   const filtered = controversies.filter((c) => {
     if (!search) return true
@@ -94,8 +94,30 @@ export default function ControversiesPage() {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-lg p-6 h-52 animate-pulse" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-lg p-6 animate-pulse flex flex-col h-full">
+              <div className="flex justify-between items-start mb-4">
+                <div className="h-6 bg-muted rounded-full w-24 mb-3" />
+                <div className="h-5 bg-muted rounded w-20 shrink-0" />
+              </div>
+
+              <div className="h-6 bg-muted rounded w-3/4 mb-3" />
+
+              <div className="space-y-2 mb-6 flex-grow">
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-5/6" />
+                <div className="h-4 bg-muted rounded w-2/3" />
+              </div>
+
+              <div className="pt-4 border-t border-border flex justify-between items-center">
+                <div className="h-4 bg-muted rounded w-28" />
+                <div className="flex gap-2">
+                  <div className="h-3 bg-muted rounded w-16" />
+                  <div className="h-6 bg-muted rounded w-12" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : (

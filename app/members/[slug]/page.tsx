@@ -1,7 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +12,11 @@ import { ArrowLeft, User, MapPin, Briefcase, CheckCircle2, History, X } from "lu
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { ActivityFeedItem } from "@/components/shared/ActivityFeedItem"
+import {
+  PieChart, Pie, Cell,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from "recharts"
 
 interface MemberDetail {
   id: string
@@ -62,43 +70,68 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
+interface MemberDetailResponse {
+  data: {
+    member: MemberDetail
+    proposedLaws: ProposedLaw[]
+    voteHistory: VoteHistoryItem[]
+    statements: StatementItem[]
+  }
+  error?: string
+}
+
 export default function MemberDetailPage() {
   const { slug } = useParams()
   const slugStr = typeof slug === "string" ? slug : (slug?.[0] ?? "")
 
-  const [member, setMember] = useState<MemberDetail | null>(null)
-  const [proposedLaws, setProposedLaws] = useState<ProposedLaw[]>([])
-  const [voteHistory, setVoteHistory] = useState<VoteHistoryItem[]>([])
-  const [statements, setStatements] = useState<StatementItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // Use cached fetch for member detail
+  const { data: memberResponse, loading, error } = useCachedFetch<MemberDetailResponse>(
+    slugStr ? `/api/members/${slugStr}` : null
+  )
 
-  useEffect(() => {
-    if (!slugStr) return
-    async function load() {
-      try {
-        const res = await fetch(`/api/members/${slugStr}`)
-        const json = await res.json()
-        if (json.error) {
-          setError(json.error)
-          return
-        }
-        if (json.data) {
-          setMember(json.data.member)
-          setProposedLaws(json.data.proposedLaws ?? [])
-          setVoteHistory(json.data.voteHistory ?? [])
-          setStatements(json.data.statements ?? [])
-        }
-      } catch {
-        setError("Failed to load member data")
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [slugStr])
+  const member = memberResponse?.data?.member ?? null
+  const proposedLaws = memberResponse?.data?.proposedLaws ?? []
+  const voteHistory = memberResponse?.data?.voteHistory ?? []
+  const statements = memberResponse?.data?.statements ?? []
+  const errorMsg = memberResponse?.error ?? (error ? "Failed to load member data" : null)
 
   const isLeadership = member && member.role !== "Member of Parliament"
+
+  // Chart mount guard (recharts can't render on SSR)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // Vote alignment data for donut chart
+  const voteAlignCounts = {
+    YEA:     voteHistory.filter(v => v.choice === "YEA").length,
+    NAY:     voteHistory.filter(v => v.choice === "NAY").length,
+    ABSTAIN: voteHistory.filter(v => v.choice === "ABSTAIN").length,
+    ABSENT:  voteHistory.filter(v => v.choice === "ABSENT").length,
+  }
+  const voteAlignData = [
+    { name: "YEA",     value: voteAlignCounts.YEA,     color: "#16a34a" },
+    { name: "NAY",     value: voteAlignCounts.NAY,     color: "#dc2626" },
+    { name: "ABSTAIN", value: voteAlignCounts.ABSTAIN, color: "#f59e0b" },
+    { name: "ABSENT",  value: voteAlignCounts.ABSENT,  color: "#94a3b8" },
+  ].filter(d => d.value > 0)
+
+  if (errorMsg) {
+    return (
+      <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
+        <div className="text-center py-16">
+          <X className="w-16 h-16 mx-auto text-destructive mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Member Not Found</h1>
+          <p className="text-muted-foreground mb-6">{errorMsg}</p>
+          <Button asChild variant="outline">
+            <Link href="/members">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Members
+            </Link>
+          </Button>
+        </div>
+      </PageTransition>
+    )
+  }
 
   if (loading) {
     return (
@@ -118,15 +151,19 @@ export default function MemberDetailPage() {
     )
   }
 
-  if (error || !member) {
+  if (!member) {
     return (
       <PageTransition className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
-        <Link href="/members" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors w-fit">
-          <ArrowLeft className="w-4 h-4" /> Back to Directory
-        </Link>
-        <div className="bg-destructive/5 border border-destructive/20 rounded-md p-8 text-center">
-          <h2 className="text-xl font-bold mb-2">Member Not Found</h2>
-          <p className="text-muted-foreground">{error ?? "This member could not be found."}</p>
+        <div className="text-center py-16">
+          <X className="w-16 h-16 mx-auto text-destructive mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Member Not Found</h1>
+          <p className="text-muted-foreground mb-6">This member could not be found.</p>
+          <Button asChild variant="outline">
+            <Link href="/members">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Members
+            </Link>
+          </Button>
         </div>
       </PageTransition>
     )
@@ -256,25 +293,91 @@ export default function MemberDetailPage() {
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="bg-card border border-border rounded-md p-6 flex flex-col gap-6 sticky top-[88px]">
 
-            <div className="flex flex-col gap-2">
-              <h3 className="font-display font-bold text-lg border-b border-border pb-2">Record Stats</h3>
-              <div className="flex justify-between items-center py-2 border-b border-border/50">
-                <span className="text-sm text-muted-foreground">Parliament Attendance</span>
-                <span className="font-bold text-success">{member.attendancePercent ?? "N/A"}%</span>
+            {/* Attendance Gauge */}
+            <div className="flex flex-col gap-3">
+              <h3 className="font-display font-bold text-lg border-b border-border pb-2">Attendance</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Parliament Sessions</span>
+                <span className={`text-2xl font-display font-bold tabular-nums ${
+                  (member.attendancePercent ?? 0) >= 90 ? "text-success" :
+                  (member.attendancePercent ?? 0) >= 75 ? "text-warning" : "text-destructive"
+                }`}>
+                  <GlitchNumber value={member.attendancePercent ?? 0} />%
+                </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-border/50">
-                <span className="text-sm text-muted-foreground">Total Votes Cast</span>
-                <span className="font-bold">{voteHistory.length}</span>
+              <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
+                <AnimatedProgress
+                  className={`h-full rounded-full ${
+                    (member.attendancePercent ?? 0) >= 90 ? "bg-success" :
+                    (member.attendancePercent ?? 0) >= 75 ? "bg-warning" : "bg-destructive"
+                  }`}
+                  value={member.attendancePercent ?? 0}
+                />
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-sm text-muted-foreground">Bills Sponsored</span>
-                <span className="font-bold">{proposedLaws.length}</span>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Votes Cast: <span className="font-bold text-foreground">{voteHistory.length}</span></span>
+                <span>Bills Sponsored: <span className="font-bold text-foreground">{proposedLaws.length}</span></span>
               </div>
             </div>
 
+            {/* Vote Alignment Donut */}
             {voteHistory.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <h3 className="font-display font-bold text-lg border-b border-border pb-2">Latest Key Votes</h3>
+              <div className="flex flex-col gap-3 border-t border-border pt-4">
+                <h3 className="font-display font-bold text-lg">Vote Alignment</h3>
+                {mounted && voteAlignData.length > 0 ? (
+                  <div style={{ height: 180 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={voteAlignData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="50%"
+                          outerRadius="70%"
+                          paddingAngle={3}
+                          dataKey="value"
+                          strokeWidth={0}
+                        >
+                          {voteAlignData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "var(--card)",
+                            borderColor: "var(--border)",
+                            color: "var(--foreground)",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[180px] bg-muted/50 rounded-md animate-pulse" />
+                )}
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
+                  {[
+                    { label: "YEA",     count: voteAlignCounts.YEA,     color: "#16a34a" },
+                    { label: "NAY",     count: voteAlignCounts.NAY,     color: "#dc2626" },
+                    { label: "ABSTAIN", count: voteAlignCounts.ABSTAIN, color: "#f59e0b" },
+                    { label: "ABSENT",  count: voteAlignCounts.ABSENT,  color: "#94a3b8" },
+                  ].map(({ label, count, color }) => (
+                    <div key={label} className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                      <span className="text-muted-foreground">{label}:</span>
+                      <span className="font-semibold">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Latest Key Votes */}
+            {voteHistory.length > 0 && (
+              <div className="flex flex-col gap-3 border-t border-border pt-4">
+                <h3 className="font-display font-bold text-lg">Latest Key Votes</h3>
                 <div className="space-y-3">
                   {voteHistory.slice(0, 4).map((v) => (
                     <div key={v.voteId} className="flex items-start gap-3">

@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { StatCard } from "@/components/shared/StatCard"
 import {
   Shield,
@@ -167,30 +169,13 @@ const SCRAPERS = [
 ]
 
 export default function TransparencyPage() {
-  const [logs, setLogs] = useState<ScrapeLog[]>([])
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Use cached fetch for both endpoints
+  const { data: logsResponse, loading: logsLoading } = useCachedFetch<{data: ScrapeLog[]}>("/api/scrape-logs?limit=10")
+  const { data: statsResponse, loading: statsLoading } = useCachedFetch<{data: Stats}>("/api/stats")
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      try {
-        const [logsRes, statsRes] = await Promise.all([
-          fetch("/api/scrape-logs?limit=10"),
-          fetch("/api/stats"),
-        ])
-        const logsJson = await logsRes.json()
-        const statsJson = await statsRes.json()
-        if (logsJson.data) setLogs(logsJson.data)
-        if (statsJson.data) setStats(statsJson.data)
-      } catch (e) {
-        console.error("Failed to load transparency data:", e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchData()
-  }, [])
+  const logs = logsResponse?.data ?? []
+  const stats = statsResponse?.data ?? null
+  const loading = logsLoading || statsLoading
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString("en-US", {
@@ -333,9 +318,9 @@ export default function TransparencyPage() {
           {stats && stats.promisesTracked > 0 ? (
             <>
               <div className="flex w-full h-3 rounded-full overflow-hidden bg-muted">
-                <div className="bg-success h-full" style={{ width: `${Math.round((stats.promisesKept / stats.promisesTracked) * 100)}%` }} />
-                <div className="bg-warning h-full" style={{ width: `${Math.round(((stats.promisesByStatus?.IN_PROGRESS ?? 0) / stats.promisesTracked) * 100)}%` }} />
-                <div className="bg-destructive h-full" style={{ width: `${Math.round(((stats.promisesByStatus?.BROKEN ?? 0) / stats.promisesTracked) * 100)}%` }} />
+                  <AnimatedProgress className="bg-success h-full" value={Math.round((stats.promisesKept / stats.promisesTracked) * 100)} delay={0.1} />
+                  <AnimatedProgress className="bg-warning h-full" value={Math.round(((stats.promisesByStatus?.IN_PROGRESS ?? 0) / stats.promisesTracked) * 100)} delay={0.2} />
+                  <AnimatedProgress className="bg-destructive h-full" value={Math.round(((stats.promisesByStatus?.BROKEN ?? 0) / stats.promisesTracked) * 100)} delay={0.3} />
               </div>
               <ul className="space-y-3 text-sm">
                 <li className="flex justify-between items-center">
@@ -637,7 +622,7 @@ export default function TransparencyPage() {
           </p>
         </div>
         <a
-          href="https://github.com/rspwatch/trackrsp/issues"
+          href="https://github.com/rijalsawan/rspwatch/issues"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"

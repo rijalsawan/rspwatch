@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { Quote, Search, ExternalLink, Calendar, User } from "lucide-react"
 import Link from "next/link"
@@ -16,15 +17,11 @@ interface Statement {
 
 export default function StatementsPage() {
   const [search, setSearch] = useState("")
-  const [statements, setStatements] = useState<Statement[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetch("/api/statements?limit=50")
-      .then((r) => r.json())
-      .then((json) => { if (json.data) setStatements(json.data as Statement[]) })
-      .finally(() => setLoading(false))
-  }, [])
+  // Use cached fetch
+  const { data: statementsResponse, loading } = useCachedFetch<{data: Statement[]}>("/api/statements?limit=50")
+
+  const statements = statementsResponse?.data ?? []
 
   const filteredStatements = statements.filter((s) => {
     if (!search) return true
@@ -61,7 +58,27 @@ export default function StatementsPage() {
       {loading ? (
         <div className="grid grid-cols-1 gap-6">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-lg p-6 h-40 animate-pulse" />
+            <div key={i} className="bg-card border border-border rounded-lg p-6 animate-pulse">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <div className="h-6 bg-muted rounded w-3/4 max-w-md" />
+                <div className="h-6 bg-muted rounded-full w-32 shrink-0" />
+              </div>
+
+              <div className="mb-4">
+                <div className="h-5 bg-muted rounded-full w-40 mb-3" />
+              </div>
+
+              <div className="space-y-2 mb-4">
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-3/4" />
+              </div>
+
+              <div className="flex justify-between items-center pt-4 border-t border-border">
+                <div className="h-4 bg-muted rounded w-24" />
+                <div className="h-8 bg-muted rounded w-20" />
+              </div>
+            </div>
           ))}
         </div>
       ) : (

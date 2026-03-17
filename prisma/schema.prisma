@@ -100,6 +100,10 @@ model Member {
   externalId        String?   @unique // ID from parliament.gov.np
   sourceUrl         String?
 
+  // Party affiliation (nullable — supports future multi-party expansion)
+  partyId           String?
+  party             Party?    @relation(fields: [partyId], references: [id])
+
   // Relations
   proposedLaws      Law[]
   memberVotes       MemberVote[]
@@ -113,6 +117,7 @@ model Member {
 
   @@index([province])
   @@index([isActive])
+  @@index([partyId])
 }
 
 /// A bill or enacted law tracked through its full lifecycle
@@ -314,4 +319,25 @@ model Tag {
   promises Promise[]
 
   createdAt DateTime @default(now())
+}
+
+/// Political party — supports multi-party expansion in Phase 4
+model Party {
+  id           String   @id @default(cuid())
+  slug         String   @unique          // e.g. "rsp"
+  name         String                    // "Rastriya Swatantra Party"
+  nameNepali   String?                   // "राष्ट्रिय स्वतन्त्र पार्टी"
+  abbreviation String                    // "RSP"
+  color        String?                   // hex color for party badge, e.g. "#0ea5e9"
+  logoUrl      String?
+  website      String?
+  foundedYear  Int?
+  isActive     Boolean  @default(true)
+
+  members      Member[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([abbreviation])
 }

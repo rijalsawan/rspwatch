@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     const res = await fetch(`${RSP_API}/blog-contents`, {
       headers: { Accept: "application/json", "User-Agent": "RSPWatch/1.0" },
-      next: { revalidate: 300 }, // cache for 5 minutes
+      cache: "no-store", // Don't cache raw response (8.6MB exceeds Next.js 2MB limit)
     })
 
     if (!res.ok) {

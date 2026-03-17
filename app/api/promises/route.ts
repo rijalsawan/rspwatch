@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
           category: true,
           status: true,
           source: true,
+          confidence: true,
           evidenceUrl: true,
           lastUpdated: true,
         },

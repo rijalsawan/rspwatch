@@ -1,3 +1,5 @@
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
+
 interface StatCardProps {
   label: string
   value: string | number
@@ -15,7 +17,7 @@ export function StatCard({ label, value, trend }: StatCardProps) {
       </h3>
       <div className="flex items-baseline gap-3">
         <span className="text-4xl font-display font-bold tabular-nums">
-          {value}
+          <GlitchNumber value={value} />
         </span>
         {trend && (
           <span
@@ -24,7 +26,7 @@ export function StatCard({ label, value, trend }: StatCardProps) {
             }`}
           >
             {trend.positive ? "+" : ""}
-            {trend.value}
+            <GlitchNumber value={trend.value} duration={1000} />
           </span>
         )}
       </div>

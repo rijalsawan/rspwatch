@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
+import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { Input } from "@/components/ui/input"
 import { Users, Check, X, Minus, Info, Search } from "lucide-react"
@@ -22,28 +24,20 @@ function formatDate(dateStr: string): string {
 }
 
 export default function VotesPage() {
-  const [votes, setVotes] = useState<VoteRecord[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/votes?limit=50")
-        const json = await res.json()
-        if (json.data) {
-          setVotes(json.data)
-          setTotal(json.meta?.total ?? json.data.length)
-        }
-      } catch (e) {
-        console.error("Failed to load votes:", e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+  // Construct the API URL
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "50" })
+    return `/api/votes?${params}`
   }, [])
+
+  // Use cached fetch
+  const { data: votesResponse, loading } = useCachedFetch<{data: VoteRecord[], meta?: {total: number}}>(apiUrl)
+
+  // Extract data from response
+  const votes = votesResponse?.data ?? []
+  const total = votesResponse?.meta?.total ?? votes.length
 
   const filtered = search
     ? votes.filter(v => {
@@ -141,10 +135,10 @@ export default function VotesPage() {
 
                     {/* Stacked Bar */}
                     <div className="flex h-4 w-full rounded-sm overflow-hidden bg-muted">
-                      {vote.breakdown.yea > 0 && <div className="bg-success h-full" style={{ width: `${(vote.breakdown.yea / totalVoters) * 100}%` }} />}
-                      {vote.breakdown.nay > 0 && <div className="bg-destructive h-full" style={{ width: `${(vote.breakdown.nay / totalVoters) * 100}%` }} />}
-                      {vote.breakdown.abstain > 0 && <div className="bg-warning h-full" style={{ width: `${(vote.breakdown.abstain / totalVoters) * 100}%` }} />}
-                      {vote.breakdown.absent > 0 && <div className="bg-secondary h-full border-l border-border" style={{ width: `${(vote.breakdown.absent / totalVoters) * 100}%` }} />}
+                        {vote.breakdown.yea > 0 && <AnimatedProgress className="bg-success h-full" value={(vote.breakdown.yea / totalVoters) * 100} delay={0.1} />}
+                        {vote.breakdown.nay > 0 && <AnimatedProgress className="bg-destructive h-full" value={(vote.breakdown.nay / totalVoters) * 100} delay={0.2} />}
+                        {vote.breakdown.abstain > 0 && <AnimatedProgress className="bg-warning h-full" value={(vote.breakdown.abstain / totalVoters) * 100} delay={0.3} />}
+                        {vote.breakdown.absent > 0 && <AnimatedProgress className="bg-secondary h-full border-l border-border" value={(vote.breakdown.absent / totalVoters) * 100} delay={0.4} />}
                     </div>
 
                     {/* Legend */}

@@ -7,6 +7,8 @@ import { ActivityFeedItem } from "@/components/shared/ActivityFeedItem"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import type { StatusType } from "@/components/shared/StatusBadge"
 import { StaggerList } from "@/components/animations/StaggerList"
+import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
+import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { ArrowRight, BookOpen, CheckCircle2, Users, FileText, Calendar } from "lucide-react"
 import Link from "next/link"
 
@@ -399,14 +401,14 @@ export default function Home() {
             {/* Visual Bar */}
             <div className="flex flex-col gap-2">
               <div className="flex w-full h-3 rounded-full overflow-hidden bg-muted">
-                <div className="bg-success h-full" style={{ width: `${keptPct}%` }} />
-                <div className="bg-warning h-full" style={{ width: `${inProgressPct}%` }} />
-                <div className="bg-destructive h-full" style={{ width: `${brokenPct}%` }} />
+                  <AnimatedProgress className="bg-success h-full" value={keptPct} delay={0.1} />
+                  <AnimatedProgress className="bg-warning h-full" value={inProgressPct} delay={0.2} />
+                  <AnimatedProgress className="bg-destructive h-full" value={brokenPct} delay={0.3} />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground font-medium px-1">
-                <span>{keptPct}% Kept</span>
-                <span>{inProgressPct}% In Progress</span>
-                <span>{brokenPct}% Broken</span>
+                  <span><GlitchNumber value={keptPct} />% Kept</span>
+                  <span><GlitchNumber value={inProgressPct} />% In Progress</span>
+                  <span><GlitchNumber value={brokenPct} />% Broken</span>
               </div>
             </div>
 

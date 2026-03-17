@@ -167,7 +167,7 @@ export function Footer() {
 
             <div className="flex items-center gap-3 mt-2">
               <a
-                href="https://github.com"
+                href="https://github.com/rijalsawan/rspwatch"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-md border border-border bg-background hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
