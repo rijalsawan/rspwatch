@@ -52,9 +52,10 @@ async function loadChunks(): Promise<Chunk[]> {
     return _chunks
   }
 
-  // Lazy-require keeps pdf-parse out of the client bundle
+  // Lazy-require keeps pdf-parse out of the client bundle.
+  // Use the main entry — serverExternalPackages ensures Turbopack never bundles it.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buf: Buffer, options?: object) => Promise<{ text: string; numpages: number }>
+  const pdfParse = require("pdf-parse") as (buf: Buffer, options?: object) => Promise<{ text: string; numpages: number }>
   const buffer = fs.readFileSync(pdfPath)
   const { text, numpages } = await pdfParse(buffer)
 

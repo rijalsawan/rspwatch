@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["playwright", "pg", "node-cron", "@neondatabase/serverless"],
+  serverExternalPackages: ["playwright", "pg", "node-cron", "@neondatabase/serverless", "pdf-parse"],
   images: {
     remotePatterns: [
       {
