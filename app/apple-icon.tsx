@@ -1,4 +1,4 @@
-import { ImageResponse } from "next/og"
+﻿import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
 export const size = { width: 180, height: 180 }
@@ -11,97 +11,26 @@ export default function AppleIcon() {
         style={{
           width: 180,
           height: 180,
-          background: "white",
-          borderRadius: 40,
+          background: "#0f172a",
+          borderRadius: 44,
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          position: "relative",
-          overflow: "hidden",
         }}
       >
-        {/* Outer circle border */}
-        <div
-          style={{
-            position: "absolute",
-            width: 160,
-            height: 160,
-            borderRadius: "50%",
-            border: "8px solid black",
-            display: "flex",
-          }}
-        />
-
-        {/* Gavel/Hammer - Parliamentary symbol */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-            zIndex: 1,
-          }}
+        <svg
+          viewBox="0 0 24 24"
+          width="100"
+          height="100"
+          fill="none"
+          stroke="#f8fafc"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          {/* Hammer head (horizontal bar) */}
-          <div
-            style={{
-              width: 60,
-              height: 16,
-              background: "black",
-              borderRadius: 6,
-              marginBottom: 8,
-            }}
-          />
-
-          {/* Hammer handle (vertical line) */}
-          <div
-            style={{
-              width: 8,
-              height: 50,
-              background: "black",
-              borderRadius: 4,
-            }}
-          />
-        </div>
-
-        {/* Wordmark - bottom */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 16,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          <span
-            style={{
-              color: "black",
-              fontSize: 16,
-              fontWeight: 800,
-              letterSpacing: -0.5,
-              fontFamily: "sans-serif",
-              lineHeight: 1,
-            }}
-          >
-            Parliament
-          </span>
-          <span
-            style={{
-              color: "black",
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: 2,
-              fontFamily: "sans-serif",
-              textTransform: "uppercase",
-            }}
-          >
-            Watch
-          </span>
-        </div>
+          <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
       </div>
     ),
     { ...size }

@@ -83,8 +83,17 @@ export function Navbar() {
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : ""
-    return () => { document.body.style.overflow = "" }
+    if (isMobileMenuOpen) {
+      document.documentElement.style.overflow = "hidden"
+      document.body.style.overflow = "hidden"
+    } else {
+      document.documentElement.style.overflow = ""
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.documentElement.style.overflow = ""
+      document.body.style.overflow = ""
+    }
   }, [isMobileMenuOpen])
 
   // Close mobile menu on route change
@@ -119,11 +128,13 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-1 shrink-0"
         >
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+            <Eye className="h-5 w-5" />
+          </div>
           <span className="font-display font-bold text-lg tracking-tight">Parliament Watch</span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+        <nav className="hidden md:flex items-center gap-0.5 md:gap-1">
           {/* Dashboard link */}
           <Link
             href={PRIMARY_LINKS[0].href}
@@ -341,13 +352,13 @@ export function Navbar() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            {/* Full-screen panel — slides up from bottom */}
+            {/* Full-screen panel — slides in from right */}
             <motion.aside
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
-              className="fixed inset-0 z-50 bg-background md:hidden flex flex-col"
+              className="fixed inset-0 z-50 bg-background md:hidden flex flex-col w-full"
             >
               {/* Header */}
               <div className="flex items-center justify-between h-16 px-5 border-b border-border shrink-0">
@@ -356,6 +367,9 @@ export function Navbar() {
                   className="flex items-center gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-1"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Eye className="h-5 w-5" />
+                  </div>
                   <span className="font-display font-bold text-lg tracking-tight">Parliament Watch</span>
                 </Link>
                 <button

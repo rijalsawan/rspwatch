@@ -192,7 +192,7 @@ export default function DiscussionsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
         {/* Left Col: Debates ─────────────────────────────── */}
-        <div className="lg:col-span-8 flex flex-col gap-8">
+        <div className="order-2 lg:order-none lg:col-span-8 flex flex-col gap-8">
 
           {/* Search + Tabs */}
           <div className="flex flex-col gap-4">
@@ -289,7 +289,7 @@ export default function DiscussionsPage() {
         </div>
 
         {/* Right Col: Sidebar ────────────────────────────── */}
-        <div className="lg:col-span-4 flex flex-col gap-8">
+        <div className="order-1 lg:order-none lg:col-span-4 flex flex-col gap-8">
 
           {/* Community Pulse */}
           <div className="bg-card border border-border p-6 rounded-md flex flex-col gap-5">

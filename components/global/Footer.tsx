@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Github,
   Mail,
+  Eye,
 } from "lucide-react"
 
 const ACCOUNTABILITY_LINKS = [
@@ -88,8 +89,11 @@ export function Footer() {
           <div className="col-span-2 md:col-span-4 flex flex-col gap-5">
             <Link
               href="/"
-              className="flex items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md w-fit"
+              className="flex items-center gap-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md w-fit group"
             >
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
+                <Eye className="h-5 w-5" />
+              </div>
               <span className="font-display font-bold text-xl tracking-tight">
                 Parliament <span className="text-muted-foreground font-normal">Watch</span>
               </span>
