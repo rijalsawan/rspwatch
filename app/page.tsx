@@ -9,7 +9,7 @@ import type { StatusType } from "@/components/shared/StatusBadge"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
 import { GlitchNumber } from "@/components/animations/GlitchNumber"
-import { ArrowRight, BookOpen, CheckCircle2, Users, FileText, Calendar, MessageCircle } from "lucide-react"
+import { ArrowRight, BookOpen, CheckCircle2, Users, FileText, Calendar, MessageCircle, Timer, XCircle } from "lucide-react"
 import Link from "next/link"
 
 interface StatsData {
@@ -213,7 +213,7 @@ export default function Home() {
                   <div className="text-sm text-muted-foreground space-x-4">
                     {featuredLaw.proposedBy && <span>Sponsor: {featuredLaw.proposedBy.name}</span>}
                   </div>
-                  <Link href={`/laws/${featuredLaw.slug}`} className="text-sm font-semibold bg-primary text-primary-foreground px-4 py-2 rounded-sm hover:-translate-y-0.5 transition-transform">
+                  <Link href={`/laws/${featuredLaw.slug}`} className="text-sm font-semibold bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
                     Read Details
                   </Link>
                 </div>
@@ -423,16 +423,14 @@ export default function Home() {
               </li>
               <li className="flex justify-between items-center">
                 <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full border-2 border-warning border-t-transparent animate-spin" />
+                  <Timer className="w-4 h-4 text-warning" />
                   In Progress
                 </span>
                 <span className="font-semibold tabular-nums">{promisesByStatus.IN_PROGRESS}</span>
               </li>
               <li className="flex justify-between items-center">
                 <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-destructive/20 border border-destructive flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-destructive rounded-full" />
-                  </div>
+                  <XCircle className="w-4 h-4 text-destructive" />
                   Broken
                 </span>
                 <span className="font-semibold tabular-nums">{promisesByStatus.BROKEN}</span>
@@ -448,13 +446,13 @@ export default function Home() {
               { label: "Floor Votes", icon: CheckCircle2, href: "/votes", count: `${statsData?.totalVotes ?? 0} Sessions` },
               { label: "Statements", icon: FileText, href: "/timeline", count: "Full Timeline" },
               { label: "Discussions", icon: MessageCircle, href: "/discussions", count: "Join Debate" },
-            ].map((item) => (
+            ].map((item, idx, arr) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col gap-3 p-4 rounded-md border border-border bg-card hover:border-primary/40 hover:shadow-sm transition-all group outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className={`flex flex-col gap-3 p-4 rounded-md border border-border bg-card hover:border-primary/40 hover:shadow-sm transition-all group outline-none focus-visible:ring-2 focus-visible:ring-ring ${idx === arr.length - 1 && arr.length % 2 !== 0 ? "col-span-2" : ""}`}
               >
-                <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex items-center justify-center">
+                <div className="w-9 h-9 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors flex items-center justify-center">
                   <item.icon className="w-[18px] h-[18px] text-primary" />
                 </div>
                 <div>

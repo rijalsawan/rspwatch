@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { User, MapPin, Briefcase, Phone } from "lucide-react"
+import { User, MapPin, CalendarCheck, Phone } from "lucide-react"
 
 export interface MemberCardProps {
   id: string
@@ -63,7 +63,7 @@ export function MemberCard({
           {nameNepali && (
             <p className="text-sm text-muted-foreground mt-0.5">{nameNepali}</p>
           )}
-          <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-sm mt-2 inline-block ${
+          <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md mt-2 inline-block ${
             isMinister ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
           }`}>
             {role}
@@ -90,7 +90,7 @@ export function MemberCard({
 
         {attendance !== undefined && (
           <div className="flex items-center gap-2.5 text-muted-foreground mt-auto pt-3 border-t border-border">
-            <Briefcase className="w-4 h-4 shrink-0" />
+            <CalendarCheck className="w-4 h-4 shrink-0" />
             <div className="flex w-full items-center justify-between">
               <span className="text-xs">Parliament Attendance</span>
               <span className={`text-xs font-bold ${

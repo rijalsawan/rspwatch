@@ -33,7 +33,7 @@ const EXPLORE_LINKS = [
 
 const PROJECT_LINKS = [
   { href: "/about", label: "About & Methodology" },
-  { href: "/about", label: "Data Sources" },
+  { href: "/transparency", label: "Data Sources" },
   { href: "/about#contribute", label: "Report an Issue" },
 ]
 
@@ -47,11 +47,11 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex flex-col gap-2 max-w-lg">
             <h3 className="font-display font-bold text-lg md:text-xl">
-              Help keep democracy accountable
+              Spot an error? Have data to add?
             </h3>
             <p className="text-sm text-muted-foreground">
-              Parliament Watch is an open-source, community-driven project. Spot
-              inaccurate data? Have a suggestion? Contribute to the project.
+              Parliament Watch is open-source and community-maintained. If you find
+              inaccurate data or want to contribute, the project is on GitHub.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -94,9 +94,7 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground group-hover:bg-primary/90 transition-colors">
                 <Eye className="h-5 w-5" />
               </div>
-              <span className="font-display font-bold text-xl tracking-tight">
-                Parliament <span className="text-muted-foreground font-normal">Watch</span>
-              </span>
+              <span className="font-display font-bold text-xl tracking-tight">Parliament Watch</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               An independent, non-partisan public accountability tracker for

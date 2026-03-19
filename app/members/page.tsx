@@ -96,7 +96,7 @@ export default function MembersPage() {
         </h1>
         <p className="text-lg text-muted-foreground">
           Explore the profiles, attendance records, and voting history of all
-          RSP representatives — from Central Committee executives to elected MPs.
+          party members — from Central Committee executives to elected MPs.
         </p>
       </div>
 

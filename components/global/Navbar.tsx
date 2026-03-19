@@ -463,23 +463,48 @@ export function Navbar() {
               </nav>
 
               {/* Footer */}
-              <div className="border-t border-border px-4 py-4 grid grid-cols-2 gap-2 shrink-0">
-                <button
-                  onClick={() => { openSearch(); setIsMobileMenuOpen(false) }}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm font-medium"
-                  aria-label="Open search"
-                >
-                  <Search className="w-4 h-4" />
-                  <span>Search</span>
-                </button>
-                <button
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm font-medium border border-border"
-                  aria-label="Toggle theme"
-                >
-                  {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  <span>{theme === "dark" ? "Light" : "Dark"} Mode</span>
-                </button>
+              <div className="border-t border-border px-4 py-4 flex flex-col gap-2 shrink-0">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { openSearch(); setIsMobileMenuOpen(false) }}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-md bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm font-medium"
+                    aria-label="Open search"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>Search</span>
+                  </button>
+                  <button
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-md text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm font-medium border border-border"
+                    aria-label="Toggle theme"
+                  >
+                    {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    <span>{theme === "dark" ? "Light" : "Dark"} Mode</span>
+                  </button>
+                </div>
+                {mounted && (
+                  session ? (
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-md border border-border text-sm">
+                      <span className="text-muted-foreground truncate">{session.user?.name}</span>
+                      <button
+                        onClick={() => { signOut(); setIsMobileMenuOpen(false) }}
+                        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Sign out"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { openAuthModal(); setIsMobileMenuOpen(false) }}
+                      className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm font-medium"
+                    >
+                      <UserCircle2 className="w-4 h-4" />
+                      Sign In
+                    </button>
+                  )
+                )}
               </div>
             </motion.aside>
           </>
