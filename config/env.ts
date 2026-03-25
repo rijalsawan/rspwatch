@@ -10,6 +10,7 @@ const envSchema = z.object({
   SCRAPE_NEWS_INTERVAL: z.string().default("0 */2 * * *"),       // every 2h
   SCRAPE_REQUEST_DELAY_MS: z.coerce.number().default(2000),
   SCRAPE_MAX_RETRIES: z.coerce.number().default(3),
+  DISABLE_SCHEDULER: z.enum(["true", "false"]).default("false").optional(),
   // RSP governance start date — used for "days in power" calculation
   RSP_GOVERNANCE_START: z.string().default("2026-03-01"),
 })

@@ -6,6 +6,7 @@ import { StaggerList } from "@/components/animations/StaggerList"
 import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
 import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { StatCard } from "@/components/shared/StatCard"
+import { SchedulerStatus } from "@/components/shared/SchedulerStatus"
 import {
   Shield,
   Database,
@@ -278,6 +279,9 @@ export default function TransparencyPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Automated Data Collection ──────────────────────── */}
+      <SchedulerStatus />
 
       {/* ── At a Glance Scorecard ──────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
