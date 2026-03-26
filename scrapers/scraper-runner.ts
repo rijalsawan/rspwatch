@@ -30,6 +30,9 @@ const SCRAPERS: Record<string, ScraperFn> = {
   "onlinekhabar": scrapeOnlineKhabar,
 }
 
+// Scrapers that run via HTTP/Cheerio — no browser needed, safe within 60s on Vercel free tier
+const FAST_SCRAPER_JOBS = ["rsp-official", "kathmandu-post", "onlinekhabar"]
+
 /**
  * Run a single scraper by job name.
  */
@@ -77,6 +80,26 @@ export async function runScraper(jobName: string): Promise<RunResult> {
       await closeBrowser().catch(() => {})
     }
   }
+}
+
+/**
+ * Run only the fast (HTTP/Cheerio) scrapers — no Playwright needed.
+ * Used by the Vercel free-tier cron (60s timeout).
+ */
+export async function runFastScrapers(): Promise<Record<string, RunResult>> {
+  const results: Record<string, RunResult> = {}
+
+  for (const jobName of FAST_SCRAPER_JOBS) {
+    console.log(`[scraper-runner] Starting ${jobName}...`)
+    results[jobName] = await runScraper(jobName)
+    console.log(
+      `[scraper-runner] ${jobName}: ${results[jobName].status} — ` +
+      `${results[jobName].recordsCreated} created, ${results[jobName].recordsUpdated} updated ` +
+      `(${results[jobName].durationMs}ms)`
+    )
+  }
+
+  return results
 }
 
 /**

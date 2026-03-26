@@ -21,7 +21,6 @@ function getNextRun(cronExpression: string, lastRanAt: Date | null): Date {
     return interval.next().toDate()
   } catch (err) {
     console.error("[scheduler-status] Failed to parse cron:", err)
-    // Fallback: return current time + 1 hour
     return new Date(Date.now() + 60 * 60 * 1000)
   }
 }
@@ -30,7 +29,6 @@ export async function GET(request: NextRequest) {
   try {
     const mode = getSchedulerMode()
 
-    // Fetch last run for each job
     const jobs = await Promise.all(
       SCRAPE_SCHEDULES.map(async (schedule) => {
         const lastRun = await prisma.scrapeLog.findFirst({
@@ -51,6 +49,7 @@ export async function GET(request: NextRequest) {
           jobName: schedule.jobName,
           description: schedule.description,
           schedule: schedule.cron,
+          runMode: schedule.runMode,
           nextRun: nextRun.toISOString(),
           lastRun: lastRun
             ? {

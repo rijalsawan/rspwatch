@@ -3,6 +3,8 @@ import { validateAdmin } from "@/lib/auth"
 import { success, error } from "@/lib/api-response"
 import { runScraper } from "@/scrapers/scraper-runner"
 
+export const maxDuration = 300
+
 const VALID_JOBS = [
   "rsp-official",
   "parliament-bills",
@@ -12,20 +14,24 @@ const VALID_JOBS = [
   "onlinekhabar",
 ]
 
-export async function POST(
+function isCronRequest(request: NextRequest): boolean {
+  if (request.headers.get("x-vercel-cron") === "1") return true
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret && request.headers.get("authorization") === `Bearer ${cronSecret}`) return true
+  return false
+}
+
+async function handleJob(
   request: NextRequest,
   { params }: { params: Promise<{ job: string }> }
 ) {
   const { job } = await params
 
-  // Auth: Vercel Cron header OR admin secret
-  const isVercelCron = request.headers.get("x-vercel-cron") === "1"
-  if (!isVercelCron) {
+  if (!isCronRequest(request)) {
     const authError = validateAdmin(request)
     if (authError) return authError
   }
 
-  // Validate job name
   if (!VALID_JOBS.includes(job)) {
     return error(`Invalid job: ${job}`, 400)
   }
@@ -54,4 +60,20 @@ export async function POST(
     console.error(`[cron/${job}] Error:`, e)
     return error("Scraper execution failed", 500)
   }
+}
+
+// Vercel Cron invokes via GET
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ job: string }> }
+) {
+  return handleJob(request, context)
+}
+
+// Manual admin trigger via POST
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ job: string }> }
+) {
+  return handleJob(request, context)
 }

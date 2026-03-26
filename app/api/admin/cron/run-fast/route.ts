@@ -1,9 +1,16 @@
+// Vercel free-tier cron endpoint — runs only HTTP/Cheerio scrapers (no Playwright).
+// Completes well within the 60-second serverless timeout.
+// Scrapers: rsp-official, kathmandu-post, onlinekhabar
+//
+// Parliament scrapers (bills, votes, members) require Playwright and must be
+// triggered manually via POST /api/admin/scrape/[job] from a local machine or CI.
+
 import { NextRequest } from "next/server"
 import { validateAdmin } from "@/lib/auth"
 import { success, error } from "@/lib/api-response"
-import { runAllScrapers } from "@/scrapers/scraper-runner"
+import { runFastScrapers } from "@/scrapers/scraper-runner"
 
-export const maxDuration = 300
+export const maxDuration = 60
 
 function isCronRequest(request: NextRequest): boolean {
   if (request.headers.get("x-vercel-cron") === "1") return true
@@ -12,17 +19,17 @@ function isCronRequest(request: NextRequest): boolean {
   return false
 }
 
-async function handleRunAll(request: NextRequest) {
+async function handleRunFast(request: NextRequest) {
   if (!isCronRequest(request)) {
     const authError = validateAdmin(request)
     if (authError) return authError
   }
 
-  console.log("[cron/run-all] Running all scrapers...")
+  console.log("[cron/run-fast] Running fast scrapers (rsp-official, kathmandu-post, onlinekhabar)...")
   const startTime = Date.now()
 
   try {
-    const results = await runAllScrapers()
+    const results = await runFastScrapers()
     const durationMs = Date.now() - startTime
 
     const totalRecordsCreated = Object.values(results).reduce(
@@ -38,26 +45,26 @@ async function handleRunAll(request: NextRequest) {
       .map(([name]) => name)
 
     console.log(
-      `[cron/run-all] Completed in ${durationMs}ms — ` +
+      `[cron/run-fast] Completed in ${durationMs}ms — ` +
         `${totalRecordsCreated} created, ${totalRecordsUpdated} updated`
     )
     if (failedJobs.length > 0) {
-      console.warn(`[cron/run-all] Failed jobs: ${failedJobs.join(", ")}`)
+      console.warn(`[cron/run-fast] Failed jobs: ${failedJobs.join(", ")}`)
     }
 
     return success({ totalRecordsCreated, totalRecordsUpdated, durationMs, failedJobs, results })
   } catch (e) {
-    console.error("[cron/run-all] Error:", e)
-    return error("Failed to run all scrapers", 500)
+    console.error("[cron/run-fast] Error:", e)
+    return error("Failed to run fast scrapers", 500)
   }
 }
 
 // Vercel Cron invokes via GET
 export async function GET(request: NextRequest) {
-  return handleRunAll(request)
+  return handleRunFast(request)
 }
 
 // Manual admin trigger via POST
 export async function POST(request: NextRequest) {
-  return handleRunAll(request)
+  return handleRunFast(request)
 }

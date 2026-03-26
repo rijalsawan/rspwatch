@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/admin/cron/run-all",
+      "path": "/api/admin/cron/run-fast",
       "schedule": "0 3 * * *"
     }
   ]
