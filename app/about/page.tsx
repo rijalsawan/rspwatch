@@ -14,7 +14,7 @@ export default function AboutPage() {
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl leading-relaxed">
           Parliament Watch is an open-source, non-partisan accountability tracker designed to monitor
-          the commitments and actions of all political parties in Nepal's Parliament.
+          the commitments and actions of all political parties in Nepal&apos;s Parliament.
         </p>
       </section>
 
@@ -34,8 +34,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold">Data Methodology</h2>
           <p className="text-muted-foreground leading-relaxed">
             Data is aggregated daily via automated web scraping and manual verification referencing 
-            the official Nepal Parliament website <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded ml-1">hr.parliament.gov.np</span> and public registry 
-            gazettes.
+            the official House and National Assembly portals <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded ml-1">hr.parliament.gov.np</span>, <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded">na.parliament.gov.np</span>, and public registry gazettes.
           </p>
         </div>
       </section>

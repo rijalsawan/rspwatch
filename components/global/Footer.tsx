@@ -182,11 +182,20 @@ export function Footer() {
                 <Github className="w-4 h-4" />
               </a>
               <a
-                href="https://parliament.gov.np"
+                href="https://hr.parliament.gov.np"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-md border border-border bg-background hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="Nepal Parliament"
+                aria-label="House of Representatives"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <a
+                href="https://na.parliament.gov.np"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-md border border-border bg-background hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="National Assembly"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>

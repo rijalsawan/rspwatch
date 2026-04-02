@@ -53,6 +53,13 @@ interface HealthData {
   overall: "operational" | "degraded" | "down"
   timestamp: string
   services: ServiceStatus[]
+  latestIngestionRun: {
+    id: string
+    status: string
+    startedAt: string
+    endedAt: string | null
+    triggerSource: string
+  } | null
   scrapers: ScraperStatus[]
 }
 
@@ -76,7 +83,7 @@ const SCRAPER_ICONS: Record<string, React.ElementType> = {
 
 function statusToType(status: string): StatusType {
   if (status === "operational" || status === "SUCCESS") return "success"
-  if (status === "degraded" || status === "PARTIAL") return "warning"
+  if (status === "degraded" || status === "PARTIAL" || status === "RUNNING") return "warning"
   return "destructive"
 }
 
@@ -174,11 +181,11 @@ export default function TestPage() {
           }`}
         >
           {health.overall === "operational" ? (
-            <CheckCircle className="w-6 h-6 text-success flex-shrink-0" />
+            <CheckCircle className="w-6 h-6 text-success shrink-0" />
           ) : health.overall === "degraded" ? (
-            <AlertTriangle className="w-6 h-6 text-warning flex-shrink-0" />
+            <AlertTriangle className="w-6 h-6 text-warning shrink-0" />
           ) : (
-            <XCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+            <XCircle className="w-6 h-6 text-destructive shrink-0" />
           )}
           <div className="flex flex-col gap-0.5 flex-1">
             <span className="font-display font-bold text-lg">
@@ -198,10 +205,30 @@ export default function TestPage() {
         </div>
       )}
 
+      {health?.latestIngestionRun && (
+        <div className="bg-card border border-border rounded-md p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">Latest ingestion run</span>
+            <span className="font-display font-semibold text-foreground">
+              {health.latestIngestionRun.status} via {health.latestIngestionRun.triggerSource}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Started {formatTimeAgo(health.latestIngestionRun.startedAt)}
+              {health.latestIngestionRun.endedAt
+                ? ` · Ended ${formatTimeAgo(health.latestIngestionRun.endedAt)}`
+                : " · Still running"}
+            </span>
+          </div>
+          <StatusBadge status={statusToType(health.latestIngestionRun.status)}>
+            {health.latestIngestionRun.status}
+          </StatusBadge>
+        </div>
+      )}
+
       {/* Error state */}
       {error && !health && (
         <div className="flex items-center gap-4 p-5 rounded-md border bg-destructive/5 border-destructive/20">
-          <XCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+          <XCircle className="w-6 h-6 text-destructive shrink-0" />
           <div className="flex flex-col gap-0.5">
             <span className="font-display font-bold text-lg">Connection Failed</span>
             <span className="text-sm text-muted-foreground">{error}</span>
@@ -243,7 +270,7 @@ export default function TestPage() {
                     key={service.name}
                     className="bg-card border border-border rounded-md p-5 flex items-center gap-4 hover:border-primary/50 transition-colors group"
                   >
-                    <div className="w-10 h-10 rounded-md bg-muted/50 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
 
@@ -258,7 +285,7 @@ export default function TestPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-4 shrink-0">
                       {service.latencyMs !== null && (
                         <span className="text-xs text-muted-foreground font-mono hidden sm:block">
                           {formatMs(service.latencyMs)}
@@ -293,7 +320,7 @@ export default function TestPage() {
                   >
                     {/* Scraper header */}
                     <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-md bg-muted/50 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
                         <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
                       <div className="flex-1 min-w-0">

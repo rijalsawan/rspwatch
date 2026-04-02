@@ -4,7 +4,6 @@ import { useCachedFetch } from "@/hooks/use-cached-fetch"
 import { PageTransition } from "@/components/animations/PageTransition"
 import { StaggerList } from "@/components/animations/StaggerList"
 import { AnimatedProgress } from "@/components/animations/AnimatedProgress"
-import { GlitchNumber } from "@/components/animations/GlitchNumber"
 import { StatCard } from "@/components/shared/StatCard"
 import { SchedulerStatus } from "@/components/shared/SchedulerStatus"
 import {
@@ -36,11 +35,22 @@ interface ScrapeLog {
   id: string
   jobName: string
   status: string
+  ingestionRunId: string | null
   recordsFound: number
   recordsCreated: number
   recordsUpdated: number
   durationMs: number | null
   ranAt: string
+}
+
+interface ScrapeLogsResponse {
+  data: ScrapeLog[]
+  meta?: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
 }
 
 interface Stats {
@@ -139,42 +149,65 @@ const SCRAPERS = [
     name: "RSP Official Website",
     url: "https://rspnepal.org",
     icon: FileText,
-    description: "Executive members synced to database — events, news, documents now use live API",
-    jobName: "rsp-official",
-    frequency: "Every 4 hours",
+    description: "Executive members and organization data synced into the platform.",
+    jobNames: ["rsp-official"],
+    cadence: "Daily · 3 AM UTC",
+    runMode: "vercel-cron" as const,
   },
   {
-    name: "Parliament of Nepal",
-    url: "https://parliament.gov.np",
+    name: "House + National Assembly Bills",
+    url: "https://hr.parliament.gov.np",
     icon: Scale,
-    description: "Bills, voting records, and MP attendance — no official API available",
-    jobName: "parliament-bills",
-    frequency: "Daily",
+    description: "Chamber-aware bill discovery and fallback parsing from both official portals.",
+    jobNames: ["parliament-bills"],
+    cadence: "Manual run",
+    runMode: "manual-only" as const,
+  },
+  {
+    name: "House + National Assembly Votes",
+    url: "https://na.parliament.gov.np",
+    icon: Scale,
+    description: "Voting records ingested with resilient extraction and outcome safeguards.",
+    jobNames: ["parliament-votes"],
+    cadence: "Manual run",
+    runMode: "manual-only" as const,
+  },
+  {
+    name: "House + National Assembly Members",
+    url: "https://hr.parliament.gov.np",
+    icon: Users,
+    description: "Member roster ingestion across both chambers with deterministic identity keys.",
+    jobNames: ["parliament-members"],
+    cadence: "Manual run",
+    runMode: "manual-only" as const,
   },
   {
     name: "Kathmandu Post",
     url: "https://kathmandupost.com",
     icon: FileText,
     description: "Political news and RSP coverage",
-    jobName: "kathmandu-post",
-    frequency: "Every 6 hours",
+    jobNames: ["kathmandu-post"],
+    cadence: "Daily · 3 AM UTC",
+    runMode: "vercel-cron" as const,
   },
   {
     name: "OnlineKhabar",
     url: "https://english.onlinekhabar.com",
     icon: FileText,
     description: "Nepali political news and analysis",
-    jobName: "onlinekhabar",
-    frequency: "Every 6 hours",
+    jobNames: ["onlinekhabar"],
+    cadence: "Daily · 3 AM UTC",
+    runMode: "vercel-cron" as const,
   },
 ]
 
 export default function TransparencyPage() {
   // Use cached fetch for both endpoints
-  const { data: logsResponse, loading: logsLoading } = useCachedFetch<{data: ScrapeLog[]}>("/api/scrape-logs?limit=10")
+  const { data: logsResponse, loading: logsLoading } = useCachedFetch<ScrapeLogsResponse>("/api/scrape-logs?limit=12")
   const { data: statsResponse, loading: statsLoading } = useCachedFetch<{data: Stats}>("/api/stats")
 
   const logs = logsResponse?.data ?? []
+  const logsMeta = logsResponse?.meta ?? null
   const stats = statsResponse?.data ?? null
   const loading = logsLoading || statsLoading
 
@@ -189,22 +222,46 @@ export default function TransparencyPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "SUCCESS": return <CheckCircle2 className="w-4 h-4 text-success" />
+      case "PARTIAL": return <AlertCircle className="w-4 h-4 text-warning" />
       case "FAILED":  return <XCircle className="w-4 h-4 text-destructive" />
       default:        return <Clock className="w-4 h-4 text-warning" />
     }
   }
 
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "SUCCESS":
+        return "bg-success/15 text-success border-success/20"
+      case "PARTIAL":
+        return "bg-warning/15 text-warning border-warning/20"
+      case "FAILED":
+        return "bg-destructive/15 text-destructive border-destructive/20"
+      default:
+        return "bg-muted text-muted-foreground border-border"
+    }
+  }
+
+  const getRunModeBadgeClass = (runMode: "vercel-cron" | "manual-only") => {
+    return runMode === "vercel-cron"
+      ? "bg-success/15 text-success border-success/20"
+      : "bg-muted text-muted-foreground border-border"
+  }
+
+  const shortRunId = (runId: string | null) => {
+    if (!runId) return "No orchestrator run"
+    return `Run ${runId.slice(0, 8)}`
+  }
+
   const getJobLabel = (jobName: string) => ({
     "rsp-official":      "RSP Official",
-    "parliament-bills":  "Parliament Bills",
-    "parliament-votes":  "Parliament Votes",
-    "parliament-members":"Parliament Members",
+    "parliament-bills":  "House + NA Bills",
+    "parliament-votes":  "House + NA Votes",
+    "parliament-members":"House + NA Members",
     "kathmandu-post":    "Kathmandu Post",
     "onlinekhabar":      "OnlineKhabar",
   }[jobName] ?? jobName)
 
   const liveCount  = RSP_API_ENDPOINTS.filter((e) => e.status === "live").length
-  const totalLive  = RSP_API_ENDPOINTS.reduce((s, e) => s + (e.status !== "skipped" && e.status !== "pending" ? e.total : 0), 0)
 
   return (
     <PageTransition className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 w-full">
@@ -224,7 +281,7 @@ export default function TransparencyPage() {
         </h1>
         <p className="text-lg text-muted-foreground">
           Parliament Watch is committed to radical transparency. This page shows exactly where our data
-          comes from, how it's integrated, and the full audit trail of our data collection.
+          comes from, how it is integrated, and the full audit trail of orchestrated data collection.
         </p>
       </div>
 
@@ -256,7 +313,7 @@ export default function TransparencyPage() {
           <div className="flex flex-col gap-1 p-4 bg-muted/30 rounded-lg">
             <span className="text-sm font-medium text-muted-foreground">Floor Votes Tracked</span>
             <span className="text-3xl font-bold font-display tracking-tight text-foreground">{stats?.totalVotes ?? 0}</span>
-            <span className="text-xs text-muted-foreground mt-1">From parliament.gov.np</span>
+            <span className="text-xs text-muted-foreground mt-1">From hr.parliament.gov.np + na.parliament.gov.np</span>
           </div>
           <div className="flex flex-col gap-1 p-4 bg-muted/30 rounded-lg">
             <span className="text-sm font-medium text-muted-foreground">Promise Rate</span>
@@ -391,7 +448,7 @@ export default function TransparencyPage() {
             <div className="col-span-4">Integration</div>
           </div>
 
-          {RSP_API_ENDPOINTS.map((ep, i) => {
+          {RSP_API_ENDPOINTS.map((ep) => {
             const style = STATUS_STYLES[ep.status]
             const Icon = ep.icon
             const StatusIcon = style.icon
@@ -477,14 +534,14 @@ export default function TransparencyPage() {
           <h2 className="text-2xl font-display font-bold">Web Scrapers</h2>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          For data sources without a public API — parliament records, news coverage — we run
-          automated scrapers that log every run with a full audit trail.
+          For sources without a public API, we run scraper jobs with deterministic IDs, warning-aware
+          partial runs, and full run-level logging for auditability.
         </p>
 
-        <StaggerList className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <StaggerList className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {SCRAPERS.map((source) => {
             const Icon = source.icon
-            const recentLog = logs.find((l) => l.jobName === source.jobName)
+            const recentLog = logs.find((log) => source.jobNames.includes(log.jobName))
             return (
               <div
                 key={source.name}
@@ -497,11 +554,19 @@ export default function TransparencyPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{source.name}</h3>
-                      <p className="text-xs text-muted-foreground">{source.frequency}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <p className="text-xs text-muted-foreground">{source.cadence}</p>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-medium ${getRunModeBadgeClass(source.runMode)}`}
+                        >
+                          {source.runMode === "vercel-cron" ? "Vercel cron" : "Manual"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <a href={source.url} target="_blank" rel="noopener noreferrer"
-                    className="text-primary hover:underline">
+                    className="text-primary hover:underline"
+                    aria-label={`Open source website for ${source.name}`}>
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
@@ -512,7 +577,7 @@ export default function TransparencyPage() {
                       {getStatusIcon(recentLog.status)}
                       <span className="text-muted-foreground">Last run: {formatDate(recentLog.ranAt)}</span>
                     </div>
-                    <span className="text-muted-foreground">
+                    <span className="text-muted-foreground text-right">
                       {recentLog.recordsCreated} new, {recentLog.recordsUpdated} updated
                     </span>
                   </div>
@@ -539,6 +604,11 @@ export default function TransparencyPage() {
           Full audit trail of automated data collection. Every scrape is logged with
           timestamps, record counts, and status.
         </p>
+        {logsMeta?.total ? (
+          <p className="text-xs text-muted-foreground">
+            Showing latest {logs.length} of {logsMeta.total} recorded scrape runs.
+          </p>
+        ) : null}
 
         {loading ? (
           <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -568,9 +638,16 @@ export default function TransparencyPage() {
               >
                 <div className="flex items-center gap-2">
                   {getStatusIcon(log.status)}
-                  <span className="text-sm font-medium hidden sm:inline">{log.status}</span>
+                  <span
+                    className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-semibold ${getStatusBadgeClass(log.status)}`}
+                  >
+                    {log.status}
+                  </span>
                 </div>
-                <div className="text-sm font-medium">{getJobLabel(log.jobName)}</div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium truncate">{getJobLabel(log.jobName)}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">{shortRunId(log.ingestionRunId)}</span>
+                </div>
                 <div className="text-sm text-muted-foreground">
                   <span className="text-success">{log.recordsCreated}</span>
                   {" / "}

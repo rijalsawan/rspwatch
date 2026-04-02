@@ -5,16 +5,36 @@
 // Example: npx tsx scripts/run-scraper.ts all
 
 import "dotenv/config"
-import { runScraper, runAllScrapers } from "../scrapers/scraper-runner"
+import {
+  getAllScraperJobs,
+  getFastScraperJobs,
+  isScraperJob,
+  runScraper,
+} from "../scrapers/scraper-runner"
 
-const VALID_SCRAPERS = [
-  "rsp-official",
-  "parliament-bills",
-  "parliament-votes",
-  "parliament-members",
-  "kathmandu-post",
-  "onlinekhabar",
-]
+const ALL_SCRAPERS = getAllScraperJobs()
+const FAST_SCRAPERS = getFastScraperJobs()
+const HEAVY_SCRAPERS = ALL_SCRAPERS.filter((job) => !FAST_SCRAPERS.includes(job))
+
+type RunnerMode = "all" | "fast" | "heavy"
+
+function isRunnerMode(arg: string): arg is RunnerMode {
+  return arg === "all" || arg === "fast" || arg === "heavy"
+}
+
+async function runBatch(mode: RunnerMode) {
+  const jobs =
+    mode === "all" ? ALL_SCRAPERS : mode === "fast" ? FAST_SCRAPERS : HEAVY_SCRAPERS
+
+  console.log(`Running ${mode} scrapers...\n`)
+  const results: Record<string, Awaited<ReturnType<typeof runScraper>>> = {}
+
+  for (const job of jobs) {
+    results[job] = await runScraper(job)
+  }
+
+  return results
+}
 
 async function main() {
   const arg = process.argv[2] || "all"
@@ -24,13 +44,12 @@ async function main() {
   console.log("═".repeat(60))
   console.log()
 
-  if (arg === "all") {
-    console.log("Running all scrapers...\n")
-    const results = await runAllScrapers()
+  if (isRunnerMode(arg)) {
+    const results = await runBatch(arg)
 
     console.log()
     console.log("═".repeat(60))
-    console.log("  Summary")
+    console.log(`  Summary (${arg})`)
     console.log("═".repeat(60))
     for (const [name, result] of Object.entries(results)) {
       const statusIcon = result.status === "SUCCESS" ? "✓" : result.status === "PARTIAL" ? "~" : "✗"
@@ -44,7 +63,7 @@ async function main() {
       }
     }
     console.log()
-  } else if (VALID_SCRAPERS.includes(arg)) {
+  } else if (isScraperJob(arg)) {
     console.log(`Running scraper: ${arg}\n`)
     const result = await runScraper(arg)
 
@@ -62,7 +81,8 @@ async function main() {
     console.log()
   } else {
     console.error(`Unknown scraper: ${arg}`)
-    console.error(`\nValid options: all, ${VALID_SCRAPERS.join(", ")}`)
+    console.error(`\nValid modes: all, fast, heavy`)
+    console.error(`Valid jobs: ${ALL_SCRAPERS.join(", ")}`)
     process.exit(1)
   }
 

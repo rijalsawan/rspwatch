@@ -14,25 +14,25 @@ const defaultRetries = parseInt(process.env.SCRAPE_MAX_RETRIES ?? "3", 10)
 
 export const SOURCES: Record<string, SourceConfig> = {
   "parliament-bills": {
-    name: "Parliament of Nepal — Bills",
-    baseUrl: "https://parliament.gov.np",
+    name: "Federal Parliament — Bills (House + National Assembly)",
+    baseUrl: "https://hr.parliament.gov.np",
     requestDelayMs: defaultDelay,
     maxRetries: defaultRetries,
-    engine: "playwright",
+    engine: "cheerio",
   },
   "parliament-votes": {
-    name: "Parliament of Nepal — Votes",
-    baseUrl: "https://parliament.gov.np",
+    name: "Federal Parliament — Votes (House + National Assembly)",
+    baseUrl: "https://hr.parliament.gov.np",
     requestDelayMs: defaultDelay,
     maxRetries: defaultRetries,
-    engine: "playwright",
+    engine: "cheerio",
   },
   "parliament-members": {
-    name: "Parliament of Nepal — Members",
-    baseUrl: "https://parliament.gov.np",
+    name: "Federal Parliament — Members (House + National Assembly)",
+    baseUrl: "https://hr.parliament.gov.np",
     requestDelayMs: defaultDelay,
     maxRetries: defaultRetries,
-    engine: "playwright",
+    engine: "cheerio",
   },
   "kathmandu-post": {
     name: "The Kathmandu Post",

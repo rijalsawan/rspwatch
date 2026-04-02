@@ -1,6 +1,8 @@
 // Cron schedule definitions for all scraping jobs
 // Cron format: second(optional) minute hour dayOfMonth month dayOfWeek
 
+import { isVercelRuntime, shouldStartInMemoryScheduler } from "@/config/env"
+
 export interface ScheduleEntry {
   jobName: string
   cron: string
@@ -10,6 +12,14 @@ export interface ScheduleEntry {
    * "manual-only"  — requires Playwright; must be triggered manually or via external CI
    */
   runMode: "vercel-cron" | "manual-only"
+}
+
+export type SchedulerMode = "in-memory" | "vercel-free" | "disabled"
+
+export function getSchedulerMode(): SchedulerMode {
+  if (isVercelRuntime()) return "vercel-free"
+  if (!shouldStartInMemoryScheduler()) return "disabled"
+  return "in-memory"
 }
 
 export const SCRAPE_SCHEDULES: ScheduleEntry[] = [
@@ -37,19 +47,19 @@ export const SCRAPE_SCHEDULES: ScheduleEntry[] = [
   {
     jobName: "parliament-bills",
     cron: process.env.SCRAPE_PARLIAMENT_INTERVAL ?? "0 3 * * *",
-    description: "Scrape bills/laws from parliament.gov.np — requires Playwright, trigger manually",
+    description: "Scrape bills/laws from House + National Assembly sources — requires Playwright, trigger manually",
     runMode: "manual-only",
   },
   {
     jobName: "parliament-votes",
     cron: process.env.SCRAPE_PARLIAMENT_INTERVAL ?? "0 3 * * *",
-    description: "Scrape voting records from parliament.gov.np — requires Playwright, trigger manually",
+    description: "Scrape voting records from House + National Assembly sources — requires Playwright, trigger manually",
     runMode: "manual-only",
   },
   {
     jobName: "parliament-members",
     cron: "0 3 * * *",
-    description: "Scrape MP list from parliament.gov.np — requires Playwright, trigger manually",
+    description: "Scrape member roster from House + National Assembly sources — requires Playwright, trigger manually",
     runMode: "manual-only",
   },
 ]

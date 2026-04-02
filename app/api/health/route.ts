@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { success } from "@/lib/api-response"
 import { SOURCES } from "@/config/scraping"
@@ -40,10 +39,17 @@ const API_TABLES = [
 ] as const
 
 // GET /api/health — Full system health check
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const services: ServiceStatus[] = []
   const scrapers: ScraperStatus[] = []
   let dbConnected = false
+  let latestIngestionRun: {
+    id: string
+    status: string
+    startedAt: string
+    endedAt: string | null
+    triggerSource: string
+  } | null = null
 
   // 1. Database connectivity — if this fails, skip all other DB queries
   const dbStart = Date.now()
@@ -107,6 +113,53 @@ export async function GET(_request: NextRequest) {
         })
       }
     }
+
+    const orchestratorStart = Date.now()
+    try {
+      const [run, lock] = await Promise.all([
+        prisma.ingestionRun.findFirst({
+          orderBy: { startedAt: "desc" },
+          select: {
+            id: true,
+            status: true,
+            startedAt: true,
+            endedAt: true,
+            triggerSource: true,
+          },
+        }),
+        prisma.ingestionLock.findUnique({
+          where: { key: "global-scrape-lock" },
+          select: { lockedUntil: true },
+        }),
+      ])
+
+      latestIngestionRun = run
+        ? {
+            id: run.id,
+            status: run.status,
+            startedAt: run.startedAt.toISOString(),
+            endedAt: run.endedAt ? run.endedAt.toISOString() : null,
+            triggerSource: run.triggerSource,
+          }
+        : null
+
+      const isLocked = lock ? lock.lockedUntil.getTime() > Date.now() : false
+      services.push({
+        name: "Ingestion Orchestrator",
+        status: isLocked && run?.status !== "RUNNING" ? "degraded" : "operational",
+        latencyMs: Date.now() - orchestratorStart,
+        detail: run
+          ? `last run ${run.status.toLowerCase()} via ${run.triggerSource}`
+          : "No ingestion runs recorded yet",
+      })
+    } catch (e) {
+      services.push({
+        name: "Ingestion Orchestrator",
+        status: "degraded",
+        latencyMs: Date.now() - orchestratorStart,
+        detail: e instanceof Error ? e.message : "Failed to read ingestion telemetry",
+      })
+    }
   } else {
     // DB is down — mark everything as down without extra queries
     services.push({
@@ -123,6 +176,12 @@ export async function GET(_request: NextRequest) {
         detail: "Skipped — database unreachable",
       })
     }
+    services.push({
+      name: "Ingestion Orchestrator",
+      status: "down",
+      latencyMs: null,
+      detail: "Skipped — database unreachable",
+    })
   }
 
   // 4. Scraper status from ScrapeLog (only query if DB is up)
@@ -171,6 +230,7 @@ export async function GET(_request: NextRequest) {
     overall: anyDown ? "degraded" : allOk ? "operational" : "degraded",
     timestamp: new Date().toISOString(),
     services,
+    latestIngestionRun,
     scrapers,
   })
 }

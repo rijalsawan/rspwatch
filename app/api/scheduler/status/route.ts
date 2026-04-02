@@ -1,17 +1,8 @@
-import { NextRequest } from "next/server"
 import { success, error } from "@/lib/api-response"
-import { SCRAPE_SCHEDULES } from "@/config/schedule"
+import { SCRAPE_SCHEDULES, getSchedulerMode } from "@/config/schedule"
 import { prisma } from "@/lib/prisma"
 import { isSchedulerRunning } from "@/scrapers/scheduler"
 import { CronExpressionParser } from "cron-parser"
-
-type SchedulerMode = "in-memory" | "vercel-free" | "disabled"
-
-function getSchedulerMode(): SchedulerMode {
-  if (process.env.DISABLE_SCHEDULER === "true") return "disabled"
-  if (process.env.VERCEL === "1") return "vercel-free"
-  return "in-memory"
-}
 
 function getNextRun(cronExpression: string, lastRanAt: Date | null): Date {
   try {
@@ -25,9 +16,40 @@ function getNextRun(cronExpression: string, lastRanAt: Date | null): Date {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const mode = getSchedulerMode()
+
+    const [latestRun, lock] = await Promise.all([
+      prisma.ingestionRun
+        .findFirst({
+          orderBy: { startedAt: "desc" },
+          select: {
+            id: true,
+            mode: true,
+            status: true,
+            triggerSource: true,
+            startedAt: true,
+            endedAt: true,
+            durationMs: true,
+            totalJobs: true,
+            failedJobs: true,
+            recordsCreated: true,
+            recordsUpdated: true,
+          },
+        })
+        .catch(() => null),
+      prisma.ingestionLock
+        .findUnique({
+          where: { key: "global-scrape-lock" },
+          select: {
+            ownerToken: true,
+            lockedUntil: true,
+            updatedAt: true,
+          },
+        })
+        .catch(() => null),
+    ])
 
     const jobs = await Promise.all(
       SCRAPE_SCHEDULES.map(async (schedule) => {
@@ -67,6 +89,29 @@ export async function GET(request: NextRequest) {
     return success({
       mode,
       isRunning: mode === "in-memory" ? isSchedulerRunning() : null,
+      lock: lock
+        ? {
+            isLocked: lock.lockedUntil.getTime() > Date.now(),
+            lockedUntil: lock.lockedUntil.toISOString(),
+            updatedAt: lock.updatedAt.toISOString(),
+            ownerPresent: Boolean(lock.ownerToken),
+          }
+        : null,
+      latestRun: latestRun
+        ? {
+            id: latestRun.id,
+            mode: latestRun.mode,
+            status: latestRun.status,
+            triggerSource: latestRun.triggerSource,
+            startedAt: latestRun.startedAt.toISOString(),
+            endedAt: latestRun.endedAt ? latestRun.endedAt.toISOString() : null,
+            durationMs: latestRun.durationMs,
+            totalJobs: latestRun.totalJobs,
+            failedJobs: latestRun.failedJobs,
+            recordsCreated: latestRun.recordsCreated,
+            recordsUpdated: latestRun.recordsUpdated,
+          }
+        : null,
       jobs,
     })
   } catch (e) {

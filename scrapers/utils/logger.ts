@@ -2,11 +2,16 @@
 
 import { prisma } from "@/lib/prisma"
 import type { ScrapeStatus } from "@prisma/client"
+import {
+  addScrapeContextWarning,
+  getCurrentScrapeContext,
+} from "./run-context"
 
 interface LogEntry {
   jobName: string
   sourceUrl?: string
   status: ScrapeStatus
+  ingestionRunId?: string
   recordsFound?: number
   recordsCreated?: number
   recordsUpdated?: number
@@ -16,12 +21,16 @@ interface LogEntry {
 }
 
 export async function logScrapeRun(entry: LogEntry): Promise<void> {
+  const context = getCurrentScrapeContext()
+  const ingestionRunId = entry.ingestionRunId ?? context?.ingestionRunId
+
   try {
     await prisma.scrapeLog.create({
       data: {
         jobName: entry.jobName,
         sourceUrl: entry.sourceUrl,
         status: entry.status,
+        ingestionRunId,
         recordsFound: entry.recordsFound ?? 0,
         recordsCreated: entry.recordsCreated ?? 0,
         recordsUpdated: entry.recordsUpdated ?? 0,
@@ -31,6 +40,9 @@ export async function logScrapeRun(entry: LogEntry): Promise<void> {
       },
     })
   } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Unknown scrape log write failure"
+    addScrapeContextWarning(`Failed to persist scrape log for ${entry.jobName}: ${message}`)
     // Never let logging failure crash the scraper
     console.error("Failed to log scrape run:", err)
   }

@@ -74,6 +74,26 @@ enum ScrapeStatus {
   FAILED
 }
 
+enum IngestionRunStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum IngestionRunMode {
+  FAST
+  ALL
+  SINGLE
+}
+
+enum IngestionTaskStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+  SKIPPED
+}
+
 enum SeverityLevel {
   LOW
   MEDIUM
@@ -308,10 +328,68 @@ model ScrapeLog {
   errorMessage   String?
   rawHtml        String?      // Raw HTML snapshot for auditing
   durationMs     Int?
+  ingestionRunId String?
+  ingestionRun   IngestionRun? @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
   ranAt          DateTime     @default(now())
 
   @@index([ranAt(sort: Desc)])
   @@index([jobName])
+  @@index([ingestionRunId])
+}
+
+/// Concurrency lock for ingestion so only one orchestrated run executes at once.
+model IngestionLock {
+  key         String   @id
+  ownerToken  String?
+  lockedUntil DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Parent run record for a cron/manual ingestion execution.
+model IngestionRun {
+  id             String            @id @default(cuid())
+  mode           IngestionRunMode
+  status         IngestionRunStatus
+  triggerSource  String
+  triggeredBy    String?
+  requestedByIp  String?
+  totalJobs      Int               @default(0)
+  succeededJobs  Int               @default(0)
+  failedJobs     Int               @default(0)
+  recordsCreated Int               @default(0)
+  recordsUpdated Int               @default(0)
+  errors         Json?
+  startedAt      DateTime          @default(now())
+  endedAt        DateTime?
+  durationMs     Int?
+
+  tasks          IngestionTaskRun[]
+  scrapeLogs     ScrapeLog[]
+
+  @@index([startedAt(sort: Desc)])
+  @@index([status])
+}
+
+/// Task-level run detail for each scraper inside an ingestion run.
+model IngestionTaskRun {
+  id             String             @id @default(cuid())
+  ingestionRunId String
+  ingestionRun   IngestionRun       @relation(fields: [ingestionRunId], references: [id], onDelete: Cascade)
+  jobName        String
+  status         IngestionTaskStatus
+  recordsFound   Int                @default(0)
+  recordsCreated Int                @default(0)
+  recordsUpdated Int                @default(0)
+  durationMs     Int?
+  errors         String?
+  startedAt      DateTime           @default(now())
+  endedAt        DateTime?
+
+  @@index([ingestionRunId])
+  @@index([jobName])
+  @@index([startedAt(sort: Desc)])
+  @@unique([ingestionRunId, jobName])
 }
 
 /// Reusable tags across Laws and Promises

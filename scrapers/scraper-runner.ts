@@ -8,7 +8,7 @@ import { scrapeKathmanduPost } from "./sources/kathmandu-post"
 import { scrapeOnlineKhabar } from "./sources/onlinekhabar"
 import { scrapeRspOfficial } from "./sources/rsp-official"
 import { closeBrowser } from "./utils/browser"
-import { logScrapeRun } from "./utils/logger"
+import { runWithScrapeContext } from "./utils/run-context"
 
 export interface RunResult {
   status: "SUCCESS" | "PARTIAL" | "FAILED"
@@ -19,26 +19,52 @@ export interface RunResult {
   durationMs: number
 }
 
+export interface RunScraperOptions {
+  ingestionRunId?: string
+}
+
 type ScraperFn = () => Promise<{ records: unknown[]; created: number; updated: number }>
 
-const SCRAPERS: Record<string, ScraperFn> = {
+const SCRAPERS = {
   "rsp-official": scrapeRspOfficial,
   "parliament-bills": scrapeParliamentBills,
   "parliament-votes": scrapeParliamentVotes,
   "parliament-members": scrapeParliamentMembers,
   "kathmandu-post": scrapeKathmanduPost,
   "onlinekhabar": scrapeOnlineKhabar,
-}
+} as const satisfies Record<string, ScraperFn>
+
+export type ScraperJobName = keyof typeof SCRAPERS
+
+const ALL_SCRAPER_JOBS = Object.keys(SCRAPERS) as ScraperJobName[]
 
 // Scrapers that run via HTTP/Cheerio — no browser needed, safe within 60s on Vercel free tier
-const FAST_SCRAPER_JOBS = ["rsp-official", "kathmandu-post", "onlinekhabar"]
+const FAST_SCRAPER_JOBS: ScraperJobName[] = ["rsp-official", "kathmandu-post", "onlinekhabar"]
+
+function isParliamentJob(jobName: string): boolean {
+  return jobName.startsWith("parliament-")
+}
+
+export function isScraperJob(jobName: string): jobName is ScraperJobName {
+  return Object.prototype.hasOwnProperty.call(SCRAPERS, jobName)
+}
+
+export function getAllScraperJobs(): ScraperJobName[] {
+  return [...ALL_SCRAPER_JOBS]
+}
+
+export function getFastScraperJobs(): ScraperJobName[] {
+  return [...FAST_SCRAPER_JOBS]
+}
 
 /**
  * Run a single scraper by job name.
  */
-export async function runScraper(jobName: string): Promise<RunResult> {
-  const scraperFn = SCRAPERS[jobName]
-  if (!scraperFn) {
+export async function runScraper(
+  jobName: string,
+  options: RunScraperOptions = {}
+): Promise<RunResult> {
+  if (!isScraperJob(jobName)) {
     return {
       status: "FAILED",
       recordsFound: 0,
@@ -49,17 +75,24 @@ export async function runScraper(jobName: string): Promise<RunResult> {
     }
   }
 
+  const scraperFn = SCRAPERS[jobName]
+
   const start = Date.now()
+  const context = {
+    ingestionRunId: options.ingestionRunId,
+    warnings: [] as string[],
+  }
+
   try {
-    const result = await scraperFn()
+    const result = await runWithScrapeContext(context, async () => scraperFn())
     const durationMs = Date.now() - start
 
     return {
-      status: "SUCCESS",
+      status: context.warnings.length > 0 ? "PARTIAL" : "SUCCESS",
       recordsFound: result.records.length,
       recordsCreated: result.created,
       recordsUpdated: result.updated,
-      errors: [],
+      errors: context.warnings,
       durationMs,
     }
   } catch (err) {
@@ -71,12 +104,12 @@ export async function runScraper(jobName: string): Promise<RunResult> {
       recordsFound: 0,
       recordsCreated: 0,
       recordsUpdated: 0,
-      errors: [errorMessage],
+      errors: [...context.warnings, errorMessage],
       durationMs,
     }
   } finally {
     // Close shared browser if a Playwright scraper was used
-    if (jobName.startsWith("parliament-")) {
+    if (isParliamentJob(jobName)) {
       await closeBrowser().catch(() => {})
     }
   }
@@ -86,12 +119,14 @@ export async function runScraper(jobName: string): Promise<RunResult> {
  * Run only the fast (HTTP/Cheerio) scrapers — no Playwright needed.
  * Used by the Vercel free-tier cron (60s timeout).
  */
-export async function runFastScrapers(): Promise<Record<string, RunResult>> {
+export async function runFastScrapers(
+  options: RunScraperOptions = {}
+): Promise<Record<string, RunResult>> {
   const results: Record<string, RunResult> = {}
 
   for (const jobName of FAST_SCRAPER_JOBS) {
     console.log(`[scraper-runner] Starting ${jobName}...`)
-    results[jobName] = await runScraper(jobName)
+    results[jobName] = await runScraper(jobName, options)
     console.log(
       `[scraper-runner] ${jobName}: ${results[jobName].status} — ` +
       `${results[jobName].recordsCreated} created, ${results[jobName].recordsUpdated} updated ` +
@@ -105,12 +140,14 @@ export async function runFastScrapers(): Promise<Record<string, RunResult>> {
 /**
  * Run all scrapers sequentially. Used by the scheduler.
  */
-export async function runAllScrapers(): Promise<Record<string, RunResult>> {
+export async function runAllScrapers(
+  options: RunScraperOptions = {}
+): Promise<Record<string, RunResult>> {
   const results: Record<string, RunResult> = {}
 
-  for (const jobName of Object.keys(SCRAPERS)) {
+  for (const jobName of ALL_SCRAPER_JOBS) {
     console.log(`[scraper-runner] Starting ${jobName}...`)
-    results[jobName] = await runScraper(jobName)
+    results[jobName] = await runScraper(jobName, options)
     console.log(
       `[scraper-runner] ${jobName}: ${results[jobName].status} — ` +
       `${results[jobName].recordsCreated} created, ${results[jobName].recordsUpdated} updated ` +

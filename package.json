@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "postinstall": "npx prisma generate",
@@ -14,6 +14,8 @@
     "db:studio": "prisma studio",
     "photos:fetch": "npx tsx scripts/fetch-member-photos.ts",
     "scrape": "npx tsx scripts/run-scraper.ts",
+    "scrape:fast": "npx tsx scripts/run-scraper.ts fast",
+    "scrape:heavy": "npx tsx scripts/run-scraper.ts heavy",
     "scrape:rsp": "npx tsx scripts/run-scraper.ts rsp-official",
     "scrape:all": "npx tsx scripts/run-scraper.ts all"
   },

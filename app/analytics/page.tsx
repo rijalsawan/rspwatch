@@ -337,10 +337,18 @@ export default function AnalyticsPage() {
             MP performance, and accountability data.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-md w-fit group relative cursor-help self-start md:self-auto">
+        <div
+          className="flex items-center gap-2 text-sm text-muted-foreground bg-card border border-border px-3 py-1.5 rounded-md w-fit group relative cursor-help self-start md:self-auto"
+          tabIndex={0}
+          aria-describedby="analytics-source-tooltip"
+        >
           <Info className="w-4 h-4" />
-          <span>parliament.gov.np · rspnepal.org</span>
-          <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bottom-full mb-2 right-0 bg-popover text-popover-foreground text-xs p-3 rounded-md shadow-md border border-border w-72 pointer-events-none z-10">
+          <span>hr.parliament.gov.np · na.parliament.gov.np · rspnepal.org</span>
+          <div
+            id="analytics-source-tooltip"
+            role="tooltip"
+            className="absolute opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity bottom-full mb-2 right-0 bg-popover text-popover-foreground text-xs p-3 rounded-md shadow-md border border-border w-72 pointer-events-none z-10"
+          >
             Data aggregated from official parliamentary records, bill registries, RSP press channels,
             and public statements. Updated regularly.
           </div>
@@ -888,7 +896,7 @@ export default function AnalyticsPage() {
       <Section>
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Activity className="w-3.5 h-3.5" />
-          Data sourced from parliament.gov.np, rspnepal.org, and RSP official channels.
+          Data sourced from hr.parliament.gov.np, na.parliament.gov.np, rspnepal.org, and official RSP channels.
           Figures reflect publicly available records and are updated continuously.
         </div>
       </Section>

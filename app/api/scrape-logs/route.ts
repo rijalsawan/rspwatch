@@ -2,15 +2,25 @@ import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { paginated, error } from "@/lib/api-response"
 
+function parsePositiveInt(value: string | null, fallback: number): number {
+  const parsed = Number.parseInt(value ?? "", 10)
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback
+  return parsed
+}
+
 // GET /api/scrape-logs — Public view of scrape history (non-sensitive data only)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl
-    const page = Math.max(parseInt(searchParams.get("page") ?? "1", 10), 1)
-    const limit = Math.min(parseInt(searchParams.get("limit") ?? "20", 10), 50)
+    const page = parsePositiveInt(searchParams.get("page"), 1)
+    const limit = Math.min(parsePositiveInt(searchParams.get("limit"), 20), 50)
     const jobName = searchParams.get("job")
+    const runId = searchParams.get("runId")
 
-    const where = jobName ? { jobName } : {}
+    const where = {
+      ...(jobName ? { jobName } : {}),
+      ...(runId ? { ingestionRunId: runId } : {}),
+    }
 
     const [data, total] = await Promise.all([
       prisma.scrapeLog.findMany({
@@ -21,6 +31,7 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           jobName: true,
+          ingestionRunId: true,
           status: true,
           recordsFound: true,
           recordsCreated: true,
