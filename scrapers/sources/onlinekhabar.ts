@@ -103,27 +103,29 @@ export async function scrapeOnlineKhabar() {
             if (!existing) {
               const relatedMember = await findRelatedMember(article.title + " " + content)
 
-              const newStatement = await prisma.statement.create({
-                data: {
-                  title: newsItem.title,
-                  content: newsItem.content,
-                  date: newsItem.date,
-                  sourceUrl: newsItem.sourceUrl,
-                  memberId: relatedMember?.id,
-                  confidence: "SCRAPED",
-                },
-              })
+              await prisma.$transaction(async (tx) => {
+                const newStatement = await tx.statement.create({
+                  data: {
+                    title: newsItem.title,
+                    content: newsItem.content,
+                    date: newsItem.date,
+                    sourceUrl: newsItem.sourceUrl,
+                    memberId: relatedMember?.id,
+                    confidence: "SCRAPED",
+                  },
+                })
 
-              await prisma.activityFeed.create({
-                data: {
-                  type: "STATEMENT",
-                  title: newsItem.title,
-                  summary: newsItem.content.substring(0, 200),
-                  date: newsItem.date,
-                  entityId: newStatement.id,
-                  relatedMemberId: relatedMember?.id,
-                  sourceUrl: newsItem.sourceUrl,
-                },
+                await tx.activityFeed.create({
+                  data: {
+                    type: "STATEMENT",
+                    title: newsItem.title,
+                    summary: newsItem.content.substring(0, 200),
+                    date: newsItem.date,
+                    entityId: newStatement.id,
+                    relatedMemberId: relatedMember?.id,
+                    sourceUrl: newsItem.sourceUrl,
+                  },
+                })
               })
               created++
             } else {

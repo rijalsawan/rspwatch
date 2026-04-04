@@ -13,20 +13,22 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Tag,
-  ImageOff,
+  Shield,
+  ArrowUpRight,
+  User,
 } from "lucide-react"
 
 interface NewsItem {
   id: string
-  slug: string
   title: string
-  titleNp: string
   excerpt: string
-  coverImage: string | null
-  tags: string[]
+  content: string | null
   sourceUrl: string
+  sourceLabel: string
+  sourceSlug: string
   date: string
+  confidence: string
+  member: { id: string; name: string; slug: string } | null
 }
 
 interface ApiMeta {
@@ -37,20 +39,17 @@ interface ApiMeta {
   hasMore: boolean
 }
 
-
-
-// Utility function to strip HTML tags and decode entities
 function stripHtml(html: string): string {
   return html
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-    .replace(/&amp;/g, '&') // Replace &amp; with &
-    .replace(/&lt;/g, '<') // Replace &lt; with <
-    .replace(/&gt;/g, '>') // Replace &gt; with >
-    .replace(/&quot;/g, '"') // Replace &quot; with "
-    .replace(/&#39;/g, "'") // Replace &#39; with '
-    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-    .trim() // Remove leading/trailing whitespace
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 interface NewsResponse {
@@ -58,28 +57,33 @@ interface NewsResponse {
   meta: ApiMeta
 }
 
+const SOURCE_TABS = [
+  { value: "all", label: "All Sources" },
+  { value: "kathmandu-post", label: "Kathmandu Post" },
+  { value: "onlinekhabar", label: "Online Khabar" },
+  { value: "rsp-official", label: "RSP Official" },
+]
+
 export default function PressPage() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [category, setCategory] = useState("all")
+  const [source, setSource] = useState("all")
   const [page, setPage] = useState(1)
   const limit = 12
 
-  // Debounce search input
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350)
     return () => clearTimeout(t)
   }, [search])
 
-  // Reset to page 1 on search/category change
-  useEffect(() => { setPage(1) }, [debouncedSearch, category])
+  useEffect(() => { setPage(1) }, [debouncedSearch, source])
 
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() })
     if (debouncedSearch) params.set("q", debouncedSearch)
-    if (category !== "all") params.set("category", category)
+    if (source !== "all") params.set("source", source)
     return `/api/news?${params}`
-  }, [page, debouncedSearch, category])
+  }, [page, debouncedSearch, source])
 
   const { data: response, loading } = useCachedFetch<NewsResponse>(apiUrl)
 
@@ -103,68 +107,72 @@ export default function PressPage() {
             <Newspaper className="w-6 h-6 text-primary" />
           </div>
           <span className="text-sm font-semibold tracking-wider uppercase text-primary">
-            Official Communications
+            Media Coverage
           </span>
         </div>
         <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground tracking-tight">
           Press & News
         </h1>
         <p className="text-lg text-muted-foreground">
-          Official press releases, announcements, and news from RSP leadership. Live-synced from rspnepal.org.
+          RSP-related coverage from Nepali media outlets and official party communications, collected by automated scrapers.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-4 bg-card border border-border rounded-md">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search news..."
-            className="pl-9 bg-background"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex flex-col gap-3 p-4 bg-card border border-border rounded-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search news..."
+              className="pl-9 bg-background"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {meta && (
+            <span className="text-sm text-muted-foreground sm:ml-auto shrink-0">
+              {meta.total} article{meta.total !== 1 ? "s" : ""}
+            </span>
+          )}
         </div>
 
-        
-
-        {meta && (
-          <span className="text-sm text-muted-foreground sm:ml-auto shrink-0">
-            {meta.total} article{meta.total !== 1 ? "s" : ""}
-          </span>
-        )}
+        {/* Source filter tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {SOURCE_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setSource(tab.value)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                source === tab.value
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* News Grid */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-card border border-border rounded-lg overflow-hidden animate-pulse">
-              {/* Cover image placeholder */}
-              <div className="relative h-48 bg-muted">
-                {/* Tags placeholder */}
-                <div className="absolute top-3 left-3 flex gap-1.5">
-                  <div className="h-5 w-12 bg-background/90 border border-border/50 rounded-full" />
-                </div>
+            <div key={i} className="bg-card border border-border rounded-lg p-5 animate-pulse">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-3.5 h-3.5 bg-muted rounded" />
+                <div className="h-3 bg-muted rounded w-24" />
               </div>
-
-              {/* Content placeholder */}
-              <div className="p-5 flex flex-col gap-2.5">
-                {/* Date placeholder */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3.5 h-3.5 bg-muted rounded" />
-                  <div className="h-3 bg-muted rounded w-24" />
-                </div>
-
-                {/* Title placeholders */}
-                <div className="h-5 bg-muted rounded w-full mb-2" />
-                <div className="h-4 bg-muted rounded w-3/4 mb-3" />
-
-                {/* Summary placeholder */}
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded w-full" />
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                </div>
+              <div className="h-5 bg-muted rounded w-full mb-2" />
+              <div className="h-5 bg-muted rounded w-3/4 mb-3" />
+              <div className="space-y-2">
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-2/3" />
+              </div>
+              <div className="mt-4 pt-3 border-t border-border">
+                <div className="h-3 bg-muted rounded w-28" />
               </div>
             </div>
           ))}
@@ -177,78 +185,54 @@ export default function PressPage() {
               href={item.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group bg-card border border-border rounded-lg overflow-hidden hover:border-primary/40 hover:shadow-md transition-all flex flex-col"
+              className="group bg-card border border-border rounded-lg p-5 hover:border-primary/40 hover:shadow-md transition-all flex flex-col"
             >
-              {/* Cover image */}
-              <div className="relative h-48 bg-muted overflow-hidden shrink-0">
-                {item.coverImage ? (
-                  <img
-                    src={item.coverImage}
-                    alt={item.titleNp || item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none"
-                      const fallback = e.currentTarget.parentElement?.querySelector(".img-fallback")
-                      if (fallback) (fallback as HTMLElement).style.display = "flex"
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="img-fallback absolute inset-0 items-center justify-center bg-muted"
-                  style={{ display: item.coverImage ? "none" : "flex" }}
-                >
-                  <ImageOff className="w-8 h-8 text-muted-foreground/40" />
-                </div>
-
-                {item.tags.length > 0 && (
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    {item.tags.slice(0, 2).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs font-medium rounded-full bg-background/90 backdrop-blur-sm text-foreground border border-border/50 capitalize"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="p-5 flex flex-col gap-2.5 flex-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {/* Source badge + date */}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-secondary text-secondary-foreground">
+                  {item.sourceLabel}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Calendar className="w-3.5 h-3.5 shrink-0" />
                   <time dateTime={item.date}>{formatDate(item.date)}</time>
+                </span>
+              </div>
+
+              {/* Title */}
+              <h2 className="font-bold text-base text-foreground leading-snug line-clamp-3 group-hover:text-primary transition-colors mb-2">
+                {stripHtml(item.title)}
+              </h2>
+
+              {/* Excerpt */}
+              {item.excerpt && (
+                <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
+                  {stripHtml(item.excerpt)}
+                </p>
+              )}
+
+              {/* Footer */}
+              <div className="mt-auto pt-3 border-t border-border flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {item.member && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                      <User className="w-3 h-3 shrink-0" />
+                      {item.member.name}
+                    </span>
+                  )}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      item.confidence === "VERIFIED"
+                        ? "bg-success"
+                        : item.confidence === "SCRAPED"
+                          ? "bg-primary"
+                          : "bg-muted-foreground"
+                    }`}
+                    title={item.confidence}
+                  />
                 </div>
-
-                {/* Nepali title — primary, as shown on rspnepal.org */}
-                {item.titleNp && (
-                  <h2 className="font-bold text-base text-foreground leading-snug line-clamp-3 group-hover:text-primary transition-colors">
-                    {stripHtml(item.titleNp)}
-                  </h2>
-                )}
-
-                {/* English title — only show if meaningfully different */}
-                {item.title && item.title !== item.titleNp && !item.title.match(/^(news|press)/i) && (
-                  <p className="text-xs text-muted-foreground line-clamp-1 italic">
-                    {stripHtml(item.title)}
-                  </p>
-                )}
-
-                {/* Excerpt */}
-                {item.excerpt && (
-                  <p className="text-sm text-muted-foreground line-clamp-2 flex-1 mt-0.5">
-                    {stripHtml(item.excerpt)}
-                  </p>
-                )}
-
-                <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">rspnepal.org</span>
-                  <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                    Read <ExternalLink className="w-3 h-3" />
-                  </span>
-                </div>
+                <span className="flex items-center gap-1 text-xs font-medium text-primary shrink-0">
+                  Read <ArrowUpRight className="w-3 h-3" />
+                </span>
               </div>
             </a>
           ))}
@@ -258,7 +242,7 @@ export default function PressPage() {
           <Newspaper className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="font-semibold text-lg">No articles found</h3>
           <p className="text-muted-foreground mt-1">
-            {search ? "Try adjusting your search." : "No published news yet."}
+            {search ? "Try adjusting your search or source filter." : "No published news yet. Scrapers will collect articles automatically."}
           </p>
         </div>
       )}
@@ -277,11 +261,8 @@ export default function PressPage() {
       )}
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <Tag className="w-3.5 h-3.5" />
-        Live-synced from{" "}
-        <a href="https://rspnepal.org/news" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-          rspnepal.org/news
-        </a>
+        <Shield className="w-3.5 h-3.5" />
+        Collected from Kathmandu Post, Online Khabar & rspnepal.org
       </div>
 
     </PageTransition>

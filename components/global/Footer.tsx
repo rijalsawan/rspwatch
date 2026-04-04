@@ -4,7 +4,7 @@ import {
   Users,
   FileText,
   BarChart3,
-  Calendar,
+  Landmark,
   Shield,
   BookOpen,
   ExternalLink,
@@ -24,7 +24,7 @@ const ACCOUNTABILITY_LINKS = [
 
 const EXPLORE_LINKS = [
   { href: "/press", label: "Press & News", icon: BookOpen },
-  { href: "/events", label: "Events", icon: Calendar },
+  { href: "/parliament", label: "Parliament", icon: Landmark },
   { href: "/manifesto", label: "Manifesto", icon: FileText },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/transparency", label: "Transparency", icon: Shield },

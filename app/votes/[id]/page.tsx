@@ -224,7 +224,7 @@ export default function VoteDetailPage() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-12 mt-12">
                 <span className="text-3xl font-display font-bold">{totalVotes}</span>
-                <span className="text-xs font-medium text-muted-foreground">RSP Votes</span>
+                <span className="text-xs font-medium text-muted-foreground">Total Votes</span>
               </div>
             </div>
 

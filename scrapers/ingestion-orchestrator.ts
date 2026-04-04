@@ -320,6 +320,28 @@ export async function executeIngestionRun(
       },
     })
 
+    // Safety net: ensure Member.role reflects the most recent PM appointment in DB
+    try {
+      const latestPMAppt = await prisma.appointment.findFirst({
+        where: { position: { contains: "Prime Minister", mode: "insensitive" } },
+        orderBy: { date: "desc" },
+        include: { member: { select: { id: true } } },
+      })
+      if (latestPMAppt?.member?.id) {
+        const pmMemberId = latestPMAppt.member.id
+        await prisma.member.update({
+          where: { id: pmMemberId },
+          data: { role: "Prime Minister" },
+        })
+        await prisma.member.updateMany({
+          where: { role: "Prime Minister", id: { not: pmMemberId } },
+          data: { role: "Member of Parliament" },
+        })
+      }
+    } catch {
+      // Non-fatal: consistency check failure must not abort the run result
+    }
+
     return {
       started: true,
       runId: run.id,

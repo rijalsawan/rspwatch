@@ -126,10 +126,10 @@ export default function ManifestoPage() {
             </span>
           </div>
           <h1 className="text-3xl md:text-5xl font-display font-bold text-foreground tracking-tight">
-            Manifesto Tracker
+            Party Manifestos
           </h1>
           <p className="text-lg text-muted-foreground">
-            Track RSP's progress on their official manifesto commitments and election promises.
+            Track political parties&apos; progress on their official manifesto commitments and election promises.
             Every pledge is monitored, verified, and scored for accountability.
           </p>
         </div>
@@ -176,9 +176,10 @@ export default function ManifestoPage() {
       {/* Tabs: Overview / Download Documents */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-6">
-          <TabsTrigger value="overview">Progress Overview</TabsTrigger>
-          <TabsTrigger value="documents">Download Documents</TabsTrigger>
+          <TabsTrigger value="overview">RSP Progress</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="pillars">By Pillar</TabsTrigger>
+          <TabsTrigger value="other-parties">Other Parties</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -270,7 +271,7 @@ export default function ManifestoPage() {
         <TabsContent value="documents" className="space-y-6 min-h-[600px] animate-in fade-in duration-500">
           <div className="bg-card border border-border p-6 rounded-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display font-bold text-lg">Official Party Documents</h3>
+              <h3 className="font-display font-bold text-lg">RSP Official Documents</h3>
               <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
@@ -446,6 +447,52 @@ export default function ManifestoPage() {
               No manifesto promises found{selectedPillar ? ` for ${selectedPillar}` : ""}.
             </div>
           )}
+        </TabsContent>
+
+        {/* Other Parties Tab */}
+        <TabsContent value="other-parties" className="space-y-6 min-h-[600px] animate-in fade-in duration-500">
+          <div className="bg-primary/5 border border-primary/20 p-5 rounded-md">
+            <h3 className="font-semibold text-foreground mb-1">Multi-Party Tracking</h3>
+            <p className="text-sm text-muted-foreground">
+              Parliament Watch is expanding coverage to all major parties in Nepal&apos;s Parliament. 
+              Manifesto data for other parties is being sourced from official party publications and parliamentary records.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { name: "Nepali Congress (NC)", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", desc: "Manifesto commitments from Nepal's oldest democratic party." },
+              { name: "CPN-UML", color: "text-red-600 dark:text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", desc: "Policy agenda and election promises from the United Marxist-Leninist party." },
+              { name: "CPN (Maoist Centre)", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", desc: "Commitments from the Maoist Centre party's official platform." },
+              { name: "Janajati & Regional Parties", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", desc: "Tracking ethnic, regional, and minority-representation parties." },
+            ].map((party) => (
+              <div
+                key={party.name}
+                className={`border ${party.border} ${party.bg} rounded-md p-5 flex flex-col gap-3`}
+              >
+                <h4 className={`font-semibold ${party.color}`}>{party.name}</h4>
+                <p className="text-sm text-muted-foreground">{party.desc}</p>
+                <span className="text-xs font-medium bg-muted text-muted-foreground px-2 py-1 rounded w-fit mt-auto">
+                  Coming Soon
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center pt-4">
+            <p className="text-sm text-muted-foreground">
+              Know a public manifesto source we should add?{" "}
+              <a
+                href="https://github.com/rijalsawan/rspwatch/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-0.5"
+              >
+                Open an issue on GitHub
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
     </PageTransition>

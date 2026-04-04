@@ -47,19 +47,19 @@ export const SCRAPE_SCHEDULES: ScheduleEntry[] = [
   {
     jobName: "parliament-bills",
     cron: process.env.SCRAPE_PARLIAMENT_INTERVAL ?? "0 3 * * *",
-    description: "Scrape bills/laws from House + National Assembly sources — requires Playwright, trigger manually",
-    runMode: "manual-only",
+    description: "Scrape bills/laws from House + National Assembly sources — Cheerio/HTTP",
+    runMode: "vercel-cron",
   },
   {
     jobName: "parliament-votes",
     cron: process.env.SCRAPE_PARLIAMENT_INTERVAL ?? "0 3 * * *",
-    description: "Scrape voting records from House + National Assembly sources — requires Playwright, trigger manually",
-    runMode: "manual-only",
+    description: "Scrape voting records from House + National Assembly sources — Cheerio/HTTP",
+    runMode: "vercel-cron",
   },
   {
     jobName: "parliament-members",
     cron: "0 3 * * *",
-    description: "Scrape member roster from House + National Assembly sources — requires Playwright, trigger manually",
-    runMode: "manual-only",
+    description: "Scrape member roster from House + National Assembly sources — Cheerio/HTTP",
+    runMode: "vercel-cron",
   },
 ]

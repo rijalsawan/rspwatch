@@ -140,6 +140,7 @@ interface StatsData {
   promisesTracked:  number
   promisesKept:     number
   daysInPower:      number
+  currentGovtLabel: string
   totalVotes:       number
   promisesByStatus: Record<string, number>
 }
@@ -333,8 +334,8 @@ export default function AnalyticsPage() {
             Analytics Dashboard
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Comprehensive visualisation of RSP&apos;s legislative record, promise fulfilment,
-            MP performance, and accountability data.
+            Comprehensive visualisation of Nepal Parliament&apos;s legislative record, promise fulfilment,
+            MP performance, and cross-party accountability data.
           </p>
         </div>
         <div
@@ -361,7 +362,7 @@ export default function AnalyticsPage() {
           <StatCard
             label="Days in Power"
             value={stats ? String(stats.daysInPower) : "—"}
-            trend={{ value: "since March 2026", positive: true }}
+            trend={{ value: stats?.currentGovtLabel ?? "Current government", positive: true }}
           />
           <StatCard
             label="Laws Filed"
@@ -704,7 +705,7 @@ export default function AnalyticsPage() {
           <SectionHeading
             icon={Users}
             title="MP Distribution"
-            subtitle="RSP membership spread across Nepal's provinces and attendance performance."
+            subtitle="Parliamentary representation across Nepal’s provinces and attendance performance."
           />
 
           {/* Province cards */}

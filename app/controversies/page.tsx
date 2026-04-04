@@ -59,7 +59,7 @@ export default function ControversiesPage() {
           <AlertTriangle className="w-10 h-10 text-destructive" /> Accountability Tracker
         </h1>
         <p className="text-lg text-muted-foreground max-w-3xl">
-          Radical transparency means tracking our own flaws. This page monitors documented controversies, ethics violations, or disputes involving RSP members.
+          Radical transparency means documenting political accountability. This page monitors controversies, ethics violations, and disputes involving members of Nepal&apos;s Parliament.
         </p>
       </div>
 

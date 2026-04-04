@@ -17,6 +17,7 @@ interface StatsData {
   promisesTracked: number
   promisesKept: number
   daysInPower: number
+  currentGovtLabel: string
   activeMps: number
   totalVotes: number
   promisesByStatus: Record<string, number>
@@ -42,14 +43,15 @@ interface LawItem {
 
 interface PressItem {
   id: string
-  slug: string
   title: string
-  titleNp: string
   excerpt: string
-  coverImage: string | null
-  tags: string[]
+  content: string | null
   sourceUrl: string
+  sourceLabel: string
+  sourceSlug: string
   date: string
+  confidence: string
+  member: { id: string; name: string; slug: string } | null
 }
 
 function activityTypeToCategory(type: string): string {
@@ -138,7 +140,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <StatusBadge status="primary" pulse>Live Tracker Active</StatusBadge>
           <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            {statsData ? `Day ${statsData.daysInPower} in Power` : "Loading..."}
+          {statsData ? `Day ${statsData.daysInPower} — ${statsData.currentGovtLabel}` : "Loading..."}
           </span>
         </div>
         <h1 className="text-4xl md:text-6xl font-display font-bold leading-tight tracking-tight text-foreground">
@@ -307,25 +309,12 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className={`group rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-sm transition-all flex flex-col overflow-hidden ${idx > 0 ? "hidden sm:flex" : ""}`}
                   >
-                    {/* Cover image */}
-                    {item.coverImage && (
-                      <div className="h-36 overflow-hidden bg-muted shrink-0">
-                        <img
-                          src={item.coverImage}
-                          alt={item.titleNp || item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
                     <div className="p-5 flex flex-col flex-1">
-                      {item.tags.length > 0 && (
-                        <span className="text-xs font-medium uppercase tracking-wider text-primary mb-2">
-                          {item.tags[0]}
-                        </span>
-                      )}
+                      <span className="text-xs font-medium uppercase tracking-wider text-primary mb-2">
+                        {item.sourceLabel}
+                      </span>
                       <h3 className="font-bold text-base mb-2 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                        {item.titleNp || item.title}
+                        {item.title}
                       </h3>
                       {item.excerpt && (
                         <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">

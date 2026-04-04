@@ -54,8 +54,8 @@ export default function VotesPage() {
           Parliamentary Votes
         </h1>
         <p className="text-lg text-muted-foreground">
-          A definitive record of how RSP lawmakers have voted on the parliament floor.
-          Monitor party discipline, individual defections, and attendance during critical legislation.
+          A definitive record of how Nepal&apos;s lawmakers have voted on the parliament floor.
+          Monitor vote outcomes, breakdowns, and legislative decisions.
         </p>
       </div>
 
@@ -89,7 +89,6 @@ export default function VotesPage() {
             {filtered.map((vote) => {
               const totalVoters = vote.breakdown.yea + vote.breakdown.nay + vote.breakdown.abstain + vote.breakdown.absent
               const isPartyLine = vote.breakdown.nay === 0 && vote.breakdown.abstain === 0
-              const defectors = !isPartyLine ? vote.breakdown.nay + vote.breakdown.abstain : 0
 
               return (
                 <div
@@ -105,9 +104,9 @@ export default function VotesPage() {
                       <span className="text-muted-foreground font-medium">{formatDate(vote.date)}</span>
                       <StatusBadge status="neutral" className="ml-2">{vote.type.replace("_", " ")}</StatusBadge>
                       {isPartyLine ? (
-                        <StatusBadge status="success" className="ml-auto lg:ml-2">Party Line Vote</StatusBadge>
+                        <StatusBadge status="success" className="ml-auto lg:ml-2">Unanimous</StatusBadge>
                       ) : (
-                        <StatusBadge status="warning" className="ml-auto lg:ml-2">{defectors} Defections</StatusBadge>
+                        <StatusBadge status="warning" className="ml-auto lg:ml-2">Split Vote</StatusBadge>
                       )}
                     </div>
 
@@ -128,7 +127,7 @@ export default function VotesPage() {
                     <div className="flex justify-between items-end mb-1">
                       <div className="flex items-center gap-1.5 text-sm font-semibold">
                         <Users className="w-4 h-4 text-muted-foreground" />
-                        <span>RSP Bloc Breakdown</span>
+                        <span>Vote Breakdown</span>
                       </div>
                       <span className="text-xs text-muted-foreground">{totalVoters} Total Votes</span>
                     </div>

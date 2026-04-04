@@ -16,8 +16,10 @@ const envSchema = z.object({
   SCRAPE_REQUEST_DELAY_MS: z.coerce.number().default(2000),
   SCRAPE_MAX_RETRIES: z.coerce.number().default(3),
   DISABLE_SCHEDULER: z.enum(["true", "false"]).default("false").optional(),
-  // RSP governance start date — used for "days in power" calculation
-  RSP_GOVERNANCE_START: z.string().default("2026-03-01"),
+  // Current government start date — used for "days in power" calculation
+  CURRENT_GOVT_START: z.string().default("2026-03-27"),
+  // Current government label — shown in "Day X in Power" counter
+  CURRENT_GOVT_LABEL: z.string().default("Balendra Shah Cabinet"),
 })
 
 export type Env = z.infer<typeof envSchema>

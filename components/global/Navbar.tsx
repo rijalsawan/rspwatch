@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Menu, X, Moon, Sun, Search, ChevronDown,
-  LayoutDashboard, Newspaper, Eye, BookOpen, Calendar,
+  LayoutDashboard, Newspaper, Eye, BookOpen, Landmark,
   Users, Scale, ClipboardList, Vote, BarChart2,
   Clock, MessageSquare, CalendarCheck, AlertTriangle,
   UserCircle2, LogOut,
@@ -22,7 +22,7 @@ const PRIMARY_LINKS = [
   { href: "/press", label: "Press & News", icon: Newspaper },
   { href: "/transparency", label: "Transparency", icon: Eye },
   { href: "/manifesto", label: "Manifesto", icon: BookOpen },
-  { href: "/events", label: "Events", icon: Calendar },
+  { href: "/parliament", label: "Parliament", icon: Landmark },
 ]
 
 const TRACKING_LINKS = [

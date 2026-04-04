@@ -4,7 +4,7 @@
 //   - https://api.rspnepal.org/executive-members  → full executive member list (paginated)
 //   - https://api.rspnepal.org/blog-contents      → full press releases & news archive
 //
-// NOTE: Events are NOT scraped here; /api/events is a live proxy to api.rspnepal.org/events.
+// NOTE: Party events endpoint removed; parliament activity scraped separately.
 // Engine: JSON API (no browser needed)
 
 import { prisma } from "@/lib/prisma"

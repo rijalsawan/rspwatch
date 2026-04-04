@@ -59,7 +59,7 @@ export default function AppointmentsPage() {
           Appointments & Cabinet
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
-          Track Rastriya Swatantra Party (RSP) members serving in the cabinet, parliamentary committees, and key structural roles.
+          Track members of Nepal&apos;s Parliament serving in the cabinet, parliamentary committees, and key government roles.
         </p>
       </div>
 

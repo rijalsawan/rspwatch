@@ -62,7 +62,7 @@ interface Stats {
   promisesByStatus: Record<string, number>
 }
 
-// RSP Official API endpoint coverage map
+// Official data source coverage map
 const RSP_API_ENDPOINTS = [
   {
     endpoint: "/executive-members",
@@ -95,14 +95,14 @@ const RSP_API_ENDPOINTS = [
     page: "/manifesto",
   },
   {
-    endpoint: "/events",
+    endpoint: "/parliament-calendar",
     icon: CalendarDays,
-    label: "Party Events",
-    total: 61,
+    label: "Parliament Activity",
+    total: null,
     status: "live" as const,
-    statusLabel: "Live Proxy",
-    detail: "Live proxy at /api/events — migrated from scraper",
-    page: "/events",
+    statusLabel: "DB Backed",
+    detail: "Scraped from hr.parliament.gov.np & na.parliament.gov.np",
+    page: "/parliament",
   },
   {
     endpoint: "/galleries",
@@ -182,10 +182,19 @@ const SCRAPERS = [
     runMode: "manual-only" as const,
   },
   {
+    name: "Parliament Appointments",
+    url: "https://pmo.gov.np",
+    icon: Users,
+    description: "Cabinet and government appointments scraped from official sources. Syncs member roles when new PM or ministers are appointed.",
+    jobNames: ["parliament-appointments"],
+    cadence: "Manual run",
+    runMode: "manual-only" as const,
+  },
+  {
     name: "Kathmandu Post",
     url: "https://kathmandupost.com",
     icon: FileText,
-    description: "Political news and RSP coverage",
+    description: "Political news and parliamentary coverage.",
     jobNames: ["kathmandu-post"],
     cadence: "Daily · 3 AM UTC",
     runMode: "vercel-cron" as const,
@@ -194,7 +203,7 @@ const SCRAPERS = [
     name: "OnlineKhabar",
     url: "https://english.onlinekhabar.com",
     icon: FileText,
-    description: "Nepali political news and analysis",
+    description: "Nepali political news and analysis.",
     jobNames: ["onlinekhabar"],
     cadence: "Daily · 3 AM UTC",
     runMode: "vercel-cron" as const,
@@ -253,12 +262,13 @@ export default function TransparencyPage() {
   }
 
   const getJobLabel = (jobName: string) => ({
-    "rsp-official":      "RSP Official",
-    "parliament-bills":  "House + NA Bills",
-    "parliament-votes":  "House + NA Votes",
-    "parliament-members":"House + NA Members",
-    "kathmandu-post":    "Kathmandu Post",
-    "onlinekhabar":      "OnlineKhabar",
+    "rsp-official":             "RSP Official",
+    "parliament-bills":         "House + NA Bills",
+    "parliament-votes":         "House + NA Votes",
+    "parliament-members":       "House + NA Members",
+    "parliament-appointments":  "Parliament Appointments",
+    "kathmandu-post":           "Kathmandu Post",
+    "onlinekhabar":             "OnlineKhabar",
   }[jobName] ?? jobName)
 
   const liveCount  = RSP_API_ENDPOINTS.filter((e) => e.status === "live").length
@@ -332,7 +342,7 @@ export default function TransparencyPage() {
           <div className="flex flex-col gap-1 p-4 bg-muted/30 rounded-lg">
             <span className="text-sm font-medium text-muted-foreground">Active MPs</span>
             <span className="text-3xl font-bold font-display tracking-tight text-foreground">{stats?.activeMps ?? 0}</span>
-            <span className="text-xs text-muted-foreground mt-1">RSP representatives</span>
+            <span className="text-xs text-muted-foreground mt-1">Tracked in parliament</span>
           </div>
         </div>
       </section>
@@ -410,15 +420,10 @@ export default function TransparencyPage() {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-primary" />
-              <h2 className="text-2xl font-display font-bold">RSP Official API Coverage</h2>
+              <h2 className="text-2xl font-display font-bold">Official Data Sources</h2>
             </div>
             <p className="text-muted-foreground max-w-2xl">
-              RSP runs a public API at{" "}
-              <a href="https://api.rspnepal.org" target="_blank" rel="noopener noreferrer"
-                className="text-primary hover:underline inline-flex items-center gap-0.5">
-                api.rspnepal.org <ExternalLink className="w-3 h-3" />
-              </a>
-              {" "}with {RSP_API_ENDPOINTS.length} endpoints discovered.
+              Parliament Watch aggregates data from Nepal&apos;s official parliamentary sources and party APIs.
               Live Proxy endpoints return real-time data with no database caching.
             </p>
           </div>
@@ -476,8 +481,8 @@ export default function TransparencyPage() {
                 {/* Count */}
                 <div className="md:col-span-1 flex items-center md:justify-end">
                   <span className="text-sm font-semibold tabular-nums text-foreground">
-                    {ep.total.toLocaleString()}
-                    {ep.status === "pending" || ep.status === "live" ? "+" : ""}
+                    {ep.total != null ? ep.total.toLocaleString() : "—"}
+                    {ep.total != null && (ep.status === "pending" || ep.status === "live") ? "+" : ""}
                   </span>
                 </div>
 
@@ -517,10 +522,15 @@ export default function TransparencyPage() {
               <span className="font-semibold text-warning">{RSP_API_ENDPOINTS.filter(e => e.status === "pending").length}</span> available, not surfaced
             </span>
             <span className="ml-auto">
-              Source:{" "}
+              Sources:{" "}
               <a href="https://api.rspnepal.org" target="_blank" rel="noopener noreferrer"
                 className="text-primary hover:underline">
                 api.rspnepal.org
+              </a>
+              {" "}&middot;{" "}
+              <a href="https://hr.parliament.gov.np" target="_blank" rel="noopener noreferrer"
+                className="text-primary hover:underline">
+                hr.parliament.gov.np
               </a>
             </span>
           </div>

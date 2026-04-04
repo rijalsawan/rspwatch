@@ -4,10 +4,11 @@
 import { scrapeParliamentBills } from "./sources/parliament-bills"
 import { scrapeParliamentVotes } from "./sources/parliament-votes"
 import { scrapeParliamentMembers } from "./sources/parliament-members"
+import { scrapeParliamentAppointments } from "./sources/parliament-appointments"
 import { scrapeKathmanduPost } from "./sources/kathmandu-post"
 import { scrapeOnlineKhabar } from "./sources/onlinekhabar"
 import { scrapeRspOfficial } from "./sources/rsp-official"
-import { closeBrowser } from "./utils/browser"
+// browser.ts no longer needed — all scrapers use Cheerio
 import { runWithScrapeContext } from "./utils/run-context"
 
 export interface RunResult {
@@ -30,6 +31,7 @@ const SCRAPERS = {
   "parliament-bills": scrapeParliamentBills,
   "parliament-votes": scrapeParliamentVotes,
   "parliament-members": scrapeParliamentMembers,
+  "parliament-appointments": scrapeParliamentAppointments,
   "kathmandu-post": scrapeKathmanduPost,
   "onlinekhabar": scrapeOnlineKhabar,
 } as const satisfies Record<string, ScraperFn>
@@ -38,8 +40,17 @@ export type ScraperJobName = keyof typeof SCRAPERS
 
 const ALL_SCRAPER_JOBS = Object.keys(SCRAPERS) as ScraperJobName[]
 
-// Scrapers that run via HTTP/Cheerio — no browser needed, safe within 60s on Vercel free tier
-const FAST_SCRAPER_JOBS: ScraperJobName[] = ["rsp-official", "kathmandu-post", "onlinekhabar"]
+// All scrapers use HTTP/Cheerio — no browser needed.
+// Parliament scrapers use fetchRawHtml() via parliament-connectors, not Playwright.
+const FAST_SCRAPER_JOBS: ScraperJobName[] = [
+  "rsp-official",
+  "kathmandu-post",
+  "onlinekhabar",
+  "parliament-bills",
+  "parliament-votes",
+  "parliament-members",
+  "parliament-appointments",
+]
 
 function isParliamentJob(jobName: string): boolean {
   return jobName.startsWith("parliament-")
@@ -108,10 +119,7 @@ export async function runScraper(
       durationMs,
     }
   } finally {
-    // Close shared browser if a Playwright scraper was used
-    if (isParliamentJob(jobName)) {
-      await closeBrowser().catch(() => {})
-    }
+    // No-op: parliament scrapers now use Cheerio, not Playwright
   }
 }
 
@@ -154,9 +162,6 @@ export async function runAllScrapers(
       `(${results[jobName].durationMs}ms)`
     )
   }
-
-  // Always clean up browser
-  await closeBrowser().catch(() => {})
 
   return results
 }

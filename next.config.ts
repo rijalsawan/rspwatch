@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.rspnepal.org",
       },
+      {
+        protocol: "https",
+        hostname: "hr.parliament.gov.np",
+      },
+      {
+        protocol: "https",
+        hostname: "na.parliament.gov.np",
+      },
     ],
   },
   async rewrites() {

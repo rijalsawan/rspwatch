@@ -38,7 +38,7 @@ export default function StatementsPage() {
       <div className="flex flex-col gap-4">
         <h1 className="text-4xl md:text-5xl font-display font-bold">Public Statements</h1>
         <p className="text-lg text-muted-foreground max-w-3xl">
-          Track official press releases, speeches, and public statements made by RSP members or the party leadership.
+          Track official press releases, speeches, and public statements made by members of Nepal&apos;s Parliament and party leadership.
         </p>
       </div>
 

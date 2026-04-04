@@ -5,10 +5,11 @@ import { success, error } from "@/lib/api-response"
 // GET /api/stats — Dashboard live stats
 export async function GET(_request: NextRequest) {
   try {
-    const RSP_GOVERNANCE_START = new Date(process.env.RSP_GOVERNANCE_START ?? "2026-03-01")
+    const CURRENT_GOVT_START = new Date(process.env.CURRENT_GOVT_START ?? "2026-03-27")
+    const CURRENT_GOVT_LABEL = process.env.CURRENT_GOVT_LABEL ?? "Balendra Shah Cabinet"
     const now = new Date()
     const daysInPower = Math.floor(
-      (now.getTime() - RSP_GOVERNANCE_START.getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - CURRENT_GOVT_START.getTime()) / (1000 * 60 * 60 * 24)
     )
 
     const [lawsPassed, promisesTracked, activeMps, totalVotes, promisesByStatus] =
@@ -38,6 +39,7 @@ export async function GET(_request: NextRequest) {
       promisesTracked,
       promisesKept: statusMap.KEPT,
       daysInPower,
+      currentGovtLabel: CURRENT_GOVT_LABEL,
       activeMps,
       totalVotes,
       promisesByStatus: statusMap,

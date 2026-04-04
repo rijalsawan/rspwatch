@@ -92,9 +92,8 @@ export default function PromisesPage() {
             Promise Tracker
           </h1>
           <p className="text-lg text-muted-foreground">
-            A comprehensive scoreboard of the commitments laid out in the RSP's
-            Citizen Contract and 2026 Election Manifesto. We track what's delivered,
-            what's stalled, and what's broken.
+            A comprehensive scoreboard of commitments made by political parties in Nepal&apos;s Parliament.
+            We track what&apos;s delivered, what&apos;s stalled, and what&apos;s broken.
           </p>
         </div>
       </div>

@@ -99,7 +99,7 @@ const TABS: { key: Tab; label: string; icon: React.FC<{ className?: string }> }[
 ]
 
 const BROWSE_CARDS = [
-  { label: "MPs & Members", href: "/members", icon: Users, desc: "Browse all 34 RSP members" },
+  { label: "MPs & Members", href: "/members", icon: Users, desc: "Browse all MPs and members of parliament" },
   { label: "Laws & Bills", href: "/laws", icon: BookOpen, desc: "Track passed and pending legislation" },
   { label: "Promises", href: "/promises", icon: CheckCircle2, desc: "Citizen contract tracker" },
   { label: "Votes", href: "/votes", icon: TrendingUp, desc: "Parliamentary roll-call votes" },
